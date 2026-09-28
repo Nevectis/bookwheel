@@ -27,6 +27,7 @@ const as = (uid) => env.authenticatedContext(uid).firestore();
 async function bootstrap(db) {
   const batch = writeBatch(db);
   batch.set(doc(db, 'club/meta'), { name: 'Seitenspringer', ownerUid: 'alice', createdAt: 1, currentBookId: null, lastPick: null });
+  batch.set(doc(db, 'club/public'), { name: 'Seitenspringer' });
   batch.set(doc(db, 'club/invite'), { code: CODE });
   batch.set(doc(db, 'members/alice'), member('Alice'));
   return batch.commit();
@@ -64,7 +65,9 @@ describe('joining', () => {
 
   it('shows non-members only that the club exists', async () => {
     const bob = as('bob');
-    await assertSucceeds(getDoc(doc(bob, 'club/meta')));
+    await assertSucceeds(getDoc(doc(bob, 'club/public')));
+    await assertFails(getDoc(doc(bob, 'club/meta'))); // founder, current book, last spin: members only
+    await assertFails(setDoc(doc(bob, 'club/public'), { name: 'Bobs Club' }));
     await assertSucceeds(getDoc(doc(bob, 'members/bob')));
     await assertFails(getDoc(doc(bob, 'club/invite')));
     await assertFails(getDocs(collection(bob, 'books')));
@@ -78,6 +81,15 @@ describe('joining', () => {
     await assertSucceeds(setDoc(doc(bob, 'members/bob'), member('Bob')));
     await assertSucceeds(getDocs(collection(bob, 'books')));
     await assertSucceeds(getDoc(doc(bob, 'club/invite')));
+  });
+
+  it('only accepts a plausible join date and a real colour', async () => {
+    const bob = as('bob');
+    await assertFails(setDoc(doc(bob, 'members/bob'), { ...member('Bob'), joinedAt: 0 }));
+    await assertFails(setDoc(doc(bob, 'members/bob'), { ...member('Bob'), joinedAt: Date.now() + 7 * 86400000 }));
+    await assertFails(setDoc(doc(bob, 'members/bob'), { ...member('Bob'), color: 'url(//evil.example/x)' }));
+    await assertSucceeds(setDoc(doc(bob, 'members/bob'), member('Bob')));
+    await assertFails(updateDoc(doc(bob, 'members/bob'), { color: 'red; background: url(x)' }));
   });
 
   it('never lets you create a membership for someone else', async () => {
@@ -94,6 +106,20 @@ describe('joining', () => {
     await assertSucceeds(setDoc(doc(as('alice'), 'club/invite'), { code: 'NEWC-ODE2' }));
   });
 
+  it('keeps the public name in step with the club, founder only', async () => {
+    const alice = as('alice');
+    const rename = (db, name) => {
+      const batch = writeBatch(db);
+      batch.update(doc(db, 'club/meta'), { name });
+      batch.set(doc(db, 'club/public'), { name });
+      return batch.commit();
+    };
+    await assertSucceeds(rename(alice, 'Neue Seiten'));
+    await assertFails(setDoc(doc(alice, 'club/public'), { name: 'Something else' })); // must match club/meta
+    await setDoc(doc(as('bob'), 'members/bob'), member('Bob'));
+    await assertFails(rename(as('bob'), 'Bobs Club'));
+  });
+
   it('protects join metadata and lets you change your name/colour', async () => {
     const bob = as('bob');
     await setDoc(doc(bob, 'members/bob'), member('Bob'));
@@ -106,6 +132,16 @@ describe('joining', () => {
     await setDoc(doc(as('bob'), 'members/bob'), member('Bob'));
     await assertFails(deleteDoc(doc(as('bob'), 'members/alice')));
     await assertSucceeds(deleteDoc(doc(as('alice'), 'members/bob')));
+  });
+
+  it('retires the old invite code when the founder removes someone', async () => {
+    await setDoc(doc(as('bob'), 'members/bob'), member('Bob'));
+    const alice = as('alice');
+    const batch = writeBatch(alice);
+    batch.delete(doc(alice, 'members/bob'));
+    batch.set(doc(alice, 'club/invite'), { code: 'FRSH-CODE' });
+    await assertSucceeds(batch.commit());
+    await assertFails(setDoc(doc(as('bob'), 'members/bob'), member('Bob'))); // old code
   });
 });
 
@@ -123,6 +159,21 @@ describe('books, picks and progress', () => {
     );
     await assertSucceeds(updateDoc(doc(bob, 'club/meta'), { currentBookId: 'b1', lastPick: { bookId: 'b1', by: 'bob', byName: 'Bob', at: 5 } }));
     await assertSucceeds(updateDoc(doc(bob, 'books/b1'), { goals: [{ id: 'g1', date: '2026-10-10', page: 50, createdBy: 'bob' }] }));
+  });
+
+  it('only accepts well-formed picks and months', async () => {
+    const bob = as('bob');
+    await setDoc(doc(bob, 'books/b1'), book('bob'));
+    const pick = (extra = {}) => ({ bookId: 'b1', by: 'bob', byName: 'Bob', at: Date.now(), ...extra });
+    await assertFails(updateDoc(doc(bob, 'club/meta'), { lastPick: pick({ by: 'alice' }) })); // in someone else's name
+    await assertFails(updateDoc(doc(bob, 'club/meta'), { lastPick: pick({ at: Date.now() + 365 * 86400000 }) })); // far future
+    await assertFails(updateDoc(doc(bob, 'club/meta'), { lastPick: pick({ junk: 'x'.repeat(1000) }) }));
+    await assertSucceeds(updateDoc(doc(bob, 'club/meta'), { currentBookId: 'b1', lastPick: pick() }));
+    // Alice may change the current book without touching Bob's pick.
+    await assertSucceeds(updateDoc(doc(as('alice'), 'club/meta'), { currentBookId: null }));
+    await assertFails(updateDoc(doc(bob, 'books/b1'), { status: 'picked', month: 'garbage' }));
+    await assertFails(updateDoc(doc(bob, 'books/b1'), { status: 'picked', month: '2026-13' }));
+    await assertSucceeds(updateDoc(doc(bob, 'books/b1'), { status: 'picked', month: '2026-12' }));
   });
 
   it('validates book fields', async () => {

@@ -1,17 +1,17 @@
 <script>
-  import { fly, slide } from 'svelte/transition';
-  import { flip } from 'svelte/animate';
+  import { fly, slide } from '../lib/motion.js';
+  import { flip } from '../lib/motion.js';
   import Icon from './Icon.svelte';
   import { club } from '../lib/store.svelte.js';
   import { t, locale } from '../lib/i18n.svelte.js';
-  import { daysUntil, isIsoDay, isoDay, shortDay } from '../lib/dates.js';
+  import { daysUntil, isIsoDay, parseDay, shortDay } from '../lib/dates.js';
   import { sortGoals } from '../lib/reading.js';
-  import { toast } from '../lib/ui.svelte.js';
+  import { clock, toast } from '../lib/ui.svelte.js';
 
   let { book } = $props();
 
   const goals = $derived(sortGoals(book.goals));
-  const today = isoDay();
+  const today = $derived(clock.day);
   const nextId = $derived(goals.find((g) => g.date >= today)?.id);
   let date = $state('');
   let page = $state('');
@@ -28,7 +28,7 @@
   }
 
   function when(iso) {
-    const d = daysUntil(iso);
+    const d = daysUntil(iso, parseDay(today));
     if (d < 0) return t('goals.past');
     if (d === 0) return t('goals.today');
     if (d === 1) return t('goals.tomorrow');

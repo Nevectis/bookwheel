@@ -1,5 +1,5 @@
 <script>
-  import { fly, slide } from 'svelte/transition';
+  import { fly, slide } from '../lib/motion.js';
   import BookSpread from './BookSpread.svelte';
   import { club } from '../lib/store.svelte.js';
   import { t } from '../lib/i18n.svelte.js';

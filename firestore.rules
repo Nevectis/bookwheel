@@ -2,7 +2,9 @@ rules_version = '2';
 
 // Bookwheel — one book club per Firebase project.
 //
-// • Anyone signed in may see whether the club exists (to show "create" vs "join").
+// • Anyone signed in may read club/public (just the club's name) to learn
+//   whether the club exists and show "create" or "join". Everything else,
+//   club/meta included, is for members only.
 // • Whoever creates club/meta first becomes the founder and sets the invite code.
 // • You become a member by writing your own members/{uid} doc carrying the
 //   current invite code; the rules compare it with club/invite, which only
@@ -38,19 +40,45 @@ service cloud.firestore {
     function changed() {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
+    function nowMs() {
+      return request.time.toMillis();
+    }
+    function clubName(v) {
+      return str(v, 80) && v.size() > 0;
+    }
+    // "Anna spun the wheel": written by the spinner, stamped with their clock
+    // (allowed to be off by up to a day, never years in the future).
+    function validPick(p) {
+      return p == null || (p is map
+        && p.keys().hasOnly(['bookId', 'by', 'byName', 'at'])
+        && str(p.bookId, 100)
+        && p.by == request.auth.uid
+        && str(p.byName, 40)
+        && p.at is int && p.at <= nowMs() + 86400000);
+    }
 
     // ── Club ────────────────────────────────────────────────────────────────
     match /club/meta {
-      allow get: if signedIn();
+      allow get: if isMember();
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['name', 'ownerUid', 'createdAt', 'currentBookId', 'lastPick'])
         && request.resource.data.ownerUid == request.auth.uid
-        && str(request.resource.data.name, 80) && request.resource.data.name.size() > 0;
+        && clubName(request.resource.data.name)
+        && request.resource.data.lastPick == null;
       allow update: if isMember()
         && changed().hasOnly(['name', 'currentBookId', 'lastPick'])
-        && (!changed().hasAny(['name']) || (isOwner() && str(request.resource.data.name, 80) && request.resource.data.name.size() > 0))
+        && (!changed().hasAny(['name']) || (isOwner() && clubName(request.resource.data.name)))
         && optStr(request.resource.data, 'currentBookId', 100)
-        && (request.resource.data.lastPick == null || request.resource.data.lastPick is map);
+        && (!changed().hasAny(['lastPick']) || validPick(request.resource.data.lastPick));
+    }
+
+    // The only thing non-members see: the club's name, kept in step with club/meta.
+    match /club/public {
+      allow get: if signedIn();
+      allow create, update: if signedIn()
+        && getAfter(/databases/$(database)/documents/club/meta).data.ownerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['name'])
+        && request.resource.data.name == getAfter(/databases/$(database)/documents/club/meta).data.name;
     }
 
     match /club/invite {
@@ -71,6 +99,8 @@ service cloud.firestore {
       allow list: if isMember();
       allow create: if signedIn() && request.auth.uid == memberId
         && validMember(request.resource.data)
+        && request.resource.data.joinedAt > nowMs() - 86400000
+        && request.resource.data.joinedAt < nowMs() + 86400000
         && request.resource.data.joinCode == getAfter(/databases/$(database)/documents/club/invite).data.code;
       allow update: if signedIn() && request.auth.uid == memberId
         && validMember(request.resource.data)
@@ -81,8 +111,8 @@ service cloud.firestore {
     function validMember(d) {
       return d.keys().hasOnly(['name', 'color', 'photoURL', 'joinedAt', 'joinCode'])
         && str(d.name, 40) && d.name.size() > 0
-        && d.joinedAt is number
-        && optStr(d, 'color', 20)
+        && d.joinedAt is int
+        && (!('color' in d) || d.color == null || (d.color is string && d.color.matches('^#[0-9a-fA-F]{6}$')))
         && optStr(d, 'photoURL', 1000);
     }
 
@@ -106,7 +136,7 @@ service cloud.firestore {
         && optStr(d, 'coverUrl', 400000)
         && optInt(d, 'pageCount', 0, 20000)
         && optStr(d, 'addedByName', 40)
-        && optStr(d, 'month', 7)
+        && (!('month' in d) || d.month == null || (d.month is string && d.month.matches('^[0-9]{4}-(0[1-9]|1[0-2])$')))
         && optNum(d, 'pickedAt')
         && optStr(d, 'pickedBy', 128)
         && optStr(d, 'pickedByName', 40)

@@ -1,10 +1,10 @@
 <script>
-  import { fly } from 'svelte/transition';
-  import { flip } from 'svelte/animate';
+  import { fly } from '../lib/motion.js';
+  import { flip } from '../lib/motion.js';
   import Modal from './Modal.svelte';
   import Avatar from './Avatar.svelte';
   import Icon from './Icon.svelte';
-  import { club } from '../lib/store.svelte.js';
+  import { club, landed } from '../lib/store.svelte.js';
   import { t, locale } from '../lib/i18n.svelte.js';
   import { longDate } from '../lib/dates.js';
   import { confirmDialog, toast } from '../lib/ui.svelte.js';
@@ -50,8 +50,12 @@
   async function rename(e) {
     e.preventDefault();
     if (!newName.trim()) return;
-    await club.renameClub(newName);
-    renaming = false;
+    try {
+      await landed(club.renameClub(newName));
+      renaming = false;
+    } catch {
+      /* toast shown by the store */
+    }
   }
 </script>
 

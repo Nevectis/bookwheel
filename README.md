@@ -2,7 +2,7 @@
 
 An animated book-club website: fill the shelf, spin the wheel for the next
 book, set reading goals, follow everyone's progress, then mark the book as read
-and rate it. The average is revealed once everybody has voted.
+and rate it. Everyone else's ratings unlock for you once you've rated it yourself.
 
 - **Hosting:** GitHub Pages (static site, deployed by GitHub Actions)
 - **Sign-in & data:** Firebase Authentication + Cloud Firestore (free Spark plan is enough)
@@ -24,8 +24,8 @@ stored only in the visitor's browser, so you can try everything straight away.
 | **Reading goals**: "by 10 Oct everyone reaches page 50" (date + page). Everyone updates their current page. | *Aktuell* |
 | Under the wheel, a **strip of little pop-ups** shows each person, the book and how far they are (including whether they're on track). | *Wer liest wie weit?* |
 | **Mark as read**, then give **1–5 stars and a review**, straight away or later. | *Aktuell*, *Chronik* |
-| The **average** appears under the book in its month (e.g. 4.3 → four full stars and a partly filled fifth), together with everyone's reviews. To avoid spoilers they stay sealed for you **until you've rated the book yourself**. Nobody has to wait for the whole club. | *Chronik* |
-| Club with **invite code / invite link**. The founder can rename the club, issue a new code and remove members. | Menu → *Club & Einladung* |
+| The **average** appears under the book in its month (e.g. 4.3 → four full stars and a partly filled fifth), together with everyone's reviews. To avoid spoilers they stay sealed for you **until you've rated the book yourself**. Nobody has to wait for the whole club. (This is a courtesy spoiler shield in the app: members' browsers still receive the ratings, so someone digging through developer tools could peek.) | *Chronik* |
+| Club with **invite code / invite link**. The founder can rename the club, issue a new code and remove members (removing someone also retires the old code). | Menu → *Club & Einladung* |
 
 ## Setup (about 15 minutes)
 
@@ -81,7 +81,7 @@ workflow rebuilds and redeploys the site.
 2. Open the menu (your avatar) → **Club & Einladung** → **Link kopieren**,
    and send the link to your friends. They sign in and join with the code
    already filled in. The code alone works too.
-3. Anyone signed in without the code only sees that a club exists. Nothing else.
+3. Anyone signed in without the code only sees the club's name, so they can be told to ask for the code. Nothing else.
 
 > Tip: `?demo` at the end of the URL always opens the local demo, even on a
 > configured site, which is handy for showing Bookwheel off without touching real data.
@@ -90,7 +90,8 @@ workflow rebuilds and redeploys the site.
 
 The look is a reading room: aged paper, bottle-green bookcloth, an oxblood
 ribbon and muted gilt. Type is set in Cormorant Garamond (display), Jost
-(interface) and Courier Prime (anything "typed" onto a card). The wheel is
+(interface) and Courier Prime (anything "typed" onto a card). The fonts are
+bundled with the site (via Fontsource), so no requests go to Google Fonts. The wheel is
 drawn as a *volvelle*, the rotating paper disc found in old books.
 
 The textures in `public/textures/` are generated, not downloaded:
@@ -120,7 +121,8 @@ Firestore layout:
 
 | Path | Contents |
 | --- | --- |
-| `club/meta` | club name, founder, current book, last spin |
+| `club/meta` | club name, founder, current book, last spin (members only) |
+| `club/public` | just the club name, readable by anyone signed in |
 | `club/invite` | invite code (members only) |
 | `members/{uid}` | name, colour, join date |
 | `books/{id}` | title, author, genre, cover, pages, `status: shelf \| picked`, month, goals |

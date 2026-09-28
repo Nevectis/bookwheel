@@ -47,7 +47,7 @@
       </span>
     </a>
 
-    <nav class="links" aria-label="Sections">
+    <nav class="links" aria-label={t('nav.sections')}>
       {#each links as l}
         <a href="#{l.id}" class:active={active === l.id} aria-current={active === l.id ? 'true' : undefined} onclick={(e) => scrollToSection(e, l.id)}>
           {t(l.key)}
@@ -68,34 +68,34 @@
           {#if club.user?.email}<span>{club.user.email}</span>{/if}
         </div>
         <div class="sep"></div>
-        <button class="mi" role="menuitem" data-close onclick={() => (ui.profileOpen = true)}><Icon name="user" size={17} />{t('menu.profile')}</button>
-        <button class="mi" role="menuitem" data-close onclick={() => (ui.clubOpen = true)} data-testid="open-club"><Icon name="users" size={17} />{t('menu.club')}</button>
+        <button class="mi" data-close onclick={() => (ui.profileOpen = true)}><Icon name="user" size={17} />{t('menu.profile')}</button>
+        <button class="mi" data-close onclick={() => (ui.clubOpen = true)} data-testid="open-club"><Icon name="users" size={17} />{t('menu.club')}</button>
         <div class="sep"></div>
         <p class="mlabel">{t('menu.language')}</p>
         <div class="seg">
-          <button class:on={i18n.lang === 'de'} onclick={() => setLang('de')}>Deutsch</button>
-          <button class:on={i18n.lang === 'en'} onclick={() => setLang('en')}>English</button>
+          <button class:on={i18n.lang === 'de'} aria-pressed={i18n.lang === 'de'} onclick={() => setLang('de')}>Deutsch</button>
+          <button class:on={i18n.lang === 'en'} aria-pressed={i18n.lang === 'en'} onclick={() => setLang('en')}>English</button>
         </div>
         <p class="mlabel">{t('menu.theme')}</p>
         <div class="seg">
-          <button class:on={ui.theme === 'system'} onclick={() => applyTheme('system')}><Icon name="auto" size={14} />{t('theme.system')}</button>
-          <button class:on={ui.theme === 'light'} onclick={() => applyTheme('light')}><Icon name="sun" size={14} />{t('theme.light')}</button>
-          <button class:on={ui.theme === 'dark'} onclick={() => applyTheme('dark')}><Icon name="moon" size={14} />{t('theme.dark')}</button>
+          <button class:on={ui.theme === 'system'} aria-pressed={ui.theme === 'system'} onclick={() => applyTheme('system')}><Icon name="auto" size={14} />{t('theme.system')}</button>
+          <button class:on={ui.theme === 'light'} aria-pressed={ui.theme === 'light'} onclick={() => applyTheme('light')}><Icon name="sun" size={14} />{t('theme.light')}</button>
+          <button class:on={ui.theme === 'dark'} aria-pressed={ui.theme === 'dark'} onclick={() => applyTheme('dark')}><Icon name="moon" size={14} />{t('theme.dark')}</button>
         </div>
-        <button class="mi" role="menuitemcheckbox" aria-checked={ui.sound} onclick={() => setSound(!ui.sound)}>
+        <button class="mi" aria-pressed={ui.sound} onclick={() => setSound(!ui.sound)}>
           <Icon name={ui.sound ? 'sound' : 'mute'} size={17} />{t('menu.sound')}: {ui.sound ? t('menu.on') : t('menu.off')}
         </button>
         <div class="sep"></div>
         {#if club.mode === 'demo'}
-          <button class="mi" role="menuitem" data-close onclick={() => club.resetDemo()}><Icon name="undo" size={17} />{t('demo.reset')}</button>
+          <button class="mi" data-close onclick={() => club.resetDemo()}><Icon name="undo" size={17} />{t('demo.reset')}</button>
         {/if}
-        <button class="mi" role="menuitem" data-close onclick={() => club.signOut()}><Icon name="logout" size={17} />{t('menu.signOut')}</button>
+        <button class="mi" data-close onclick={() => club.signOut()}><Icon name="logout" size={17} />{t('menu.signOut')}</button>
       {/snippet}
     </Menu>
   </div>
 </header>
 
-<nav class="dock" aria-label="Sections">
+<nav class="dock" aria-label={t('nav.sections')}>
   {#each links as l}
     <a href="#{l.id}" class:active={active === l.id} onclick={(e) => scrollToSection(e, l.id)}>
       <Icon name={l.icon} size={19} stroke={1.6} />

@@ -1,11 +1,25 @@
 import { describe, expect, it, vi } from 'vitest';
-import { addMonths, daysUntil, isIsoDay, isMonthKey, monthKey, suggestMonth } from '../../src/lib/dates.js';
+import { addMonths, daysUntil, isIsoDay, isMonthKey, monthKey, monthOptions, suggestMonth } from '../../src/lib/dates.js';
 import { GENRES, genreById, guessGenre } from '../../src/lib/genres.js';
 import { fromGoogle, fromOpenLibrary, mergeResults, safeImageUrl, searchBooks } from '../../src/lib/covers.js';
 import { translate } from '../../src/lib/i18n.svelte.js';
 import { de, en } from '../../src/lib/strings.js';
 
 describe('dates', () => {
+  it('accepts only real calendar days', () => {
+    expect(isIsoDay('2026-02-28')).toBe(true);
+    expect(isIsoDay('2028-02-29')).toBe(true);
+    expect(isIsoDay('2026-02-31')).toBe(false);
+    expect(isIsoDay('2026-13-01')).toBe(false);
+  });
+
+  it('always offers the month a book is already in', () => {
+    const opts = monthOptions('2026-09', 2, 8, '2027-07');
+    expect(opts).toContain('2027-07');
+    expect(opts).toEqual([...opts].sort());
+    expect(monthOptions('2026-09', 1, 1, 'junk')).toEqual(['2026-08', '2026-09', '2026-10']);
+  });
+
   it('builds and shifts month keys across year boundaries', () => {
     expect(monthKey(new Date(2026, 8, 28))).toBe('2026-09');
     expect(addMonths('2026-12', 1)).toBe('2027-01');
@@ -121,5 +135,13 @@ describe('strings', () => {
     expect(translate('de', 'wheel.count', { n: 3 })).toBe('3 Bücher im Rad');
     expect(translate('en', 'club.joinTitle', { club: 'Seitenspringer' })).toBe('Join Seitenspringer');
     expect(translate('de', 'missing.key')).toBe('missing.key');
+  });
+
+  it('uses the singular for one in English and German', () => {
+    expect(translate('en', 'ticker.behind', { n: 1 })).toBe('1 page behind');
+    expect(translate('en', 'ticker.toGo', { n: 2 })).toBe('2 pages to the goal');
+    expect(translate('en', 'chron.votes', { n: 1, m: 1 })).toBe('1 of 1 rating in');
+    expect(translate('de', 'chron.votes', { n: 1, m: 5 })).toBe('1 von 5 Bewertungen');
+    expect(translate('de', 'current.pages', { n: 1 })).toBe('1 Seite');
   });
 });

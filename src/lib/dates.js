@@ -41,10 +41,12 @@ export function monthName(key, locale) {
 }
 
 /** A few months either side of `around`, for month pickers. */
-export function monthOptions(around = monthKey(), before = 6, after = 6) {
+/** Months around `around`, always including `keep` (the value currently chosen). */
+export function monthOptions(around = monthKey(), before = 6, after = 6, keep = null) {
   const out = [];
   for (let i = -before; i <= after; i++) out.push(addMonths(around, i));
-  return out;
+  if (keep && isMonthKey(keep) && !out.includes(keep)) out.push(keep);
+  return out.sort();
 }
 
 export function isoDay(date = new Date()) {
@@ -52,7 +54,8 @@ export function isoDay(date = new Date()) {
 }
 
 export function isIsoDay(s) {
-  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(parseDay(s).getTime());
+  // A real calendar day: Date would quietly roll 31 February over into March.
+  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && isoDay(parseDay(s)) === s;
 }
 
 export function parseDay(iso) {

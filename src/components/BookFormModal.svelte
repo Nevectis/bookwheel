@@ -1,10 +1,10 @@
 <script>
-  import { untrack } from 'svelte';
-  import { fly, fade, slide } from 'svelte/transition';
+  import { onMount, untrack } from 'svelte';
+  import { fly, fade, slide } from '../lib/motion.js';
   import Modal from './Modal.svelte';
   import BookCover from './BookCover.svelte';
   import Icon from './Icon.svelte';
-  import { club } from '../lib/store.svelte.js';
+  import { club, landed } from '../lib/store.svelte.js';
   import { t } from '../lib/i18n.svelte.js';
   import { GENRES, genreSwatch, guessGenre } from '../lib/genres.js';
   import { compressImage, safeImageUrl, searchBooks } from '../lib/covers.js';
@@ -45,15 +45,17 @@
     }
     searching = true;
     timer = setTimeout(async () => {
-      controller = new AbortController();
+      const ctl = (controller = new AbortController());
+      let found = [];
       try {
-        results = await searchBooks(q, { signal: controller.signal, apiKey: googleBooksApiKey });
-        searched = true;
+        found = await searchBooks(q, { signal: ctl.signal, apiKey: googleBooksApiKey });
       } catch {
-        /* aborted or offline */
-      } finally {
-        searching = false;
+        /* offline: shows as "nothing found" */
       }
+      if (ctl.signal.aborted) return; // a newer search owns the results now
+      results = found;
+      searched = true;
+      searching = false;
     }, 380);
   }
 
@@ -93,6 +95,9 @@
     error = '';
   }
 
+  let open = true;
+  onMount(() => () => (open = false));
+
   const preview = $derived({ title: title || '…', author: author || '', genre: genre || 'literary-fiction', coverUrl });
 
   async function submit(e) {
@@ -115,17 +120,18 @@
     }
     busy = true;
     try {
-      if (mode === 'add') await club.addBook(data);
-      else {
-        await club.updateBook(bookId, {
-          title: data.title.trim().slice(0, 200),
-          author: data.author.trim().slice(0, 200),
-          genre: data.genre,
-          coverUrl: data.coverUrl,
-          pageCount: data.pageCount,
-        });
-      }
-      onclose();
+      await landed(
+        mode === 'add'
+          ? club.addBook(data)
+          : club.updateBook(bookId, {
+              title: data.title.trim().slice(0, 200),
+              author: data.author.trim().slice(0, 200),
+              genre: data.genre,
+              coverUrl: data.coverUrl,
+              pageCount: data.pageCount,
+            }),
+      );
+      if (open) onclose();
     } catch {
       /* toast shown by the store */
     } finally {
@@ -134,7 +140,7 @@
   }
 
   async function remove() {
-    const ok = await confirmDialog(`${t('edit.remove')}: „${existing.title}“?`, { confirmLabel: t('edit.remove'), danger: true });
+    const ok = await confirmDialog(t('edit.removeConfirm', { title: existing.title }), { confirmLabel: t('edit.remove'), danger: true });
     if (!ok) return;
     onclose();
     club.removeBook(existing).catch(() => {});

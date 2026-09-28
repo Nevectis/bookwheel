@@ -2,7 +2,7 @@
 // lives in this browser's localStorage. It ships with a sample club so the
 // site is fully explorable before Firebase is configured.
 import { addMonths, isoDay, monthKey } from '../dates.js';
-import { cleanBookInput, makeInviteCode, pickMemberColor } from '../club.js';
+import { cleanBookInput, cleanText, makeInviteCode, pickMemberColor } from '../club.js';
 import { progressId } from '../reading.js';
 
 const KEY = 'bookwheel:demo-v2';
@@ -128,6 +128,24 @@ export function seedDemo(now = new Date()) {
   };
 }
 
+const fail = (code) => Object.assign(new Error(code), { code });
+const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** Stored data we can trust enough to run on (otherwise start a fresh sample club). */
+export function isDemoState(s) {
+  return (
+    isObj(s) &&
+    isObj(s.meta) &&
+    typeof s.meta.name === 'string' &&
+    isObj(s.invite) &&
+    isObj(s.members) &&
+    isObj(s.books) &&
+    isObj(s.progress) &&
+    Object.values(s.books).every((b) => isObj(b) && typeof b.title === 'string') &&
+    Object.values(s.members).every((m) => isObj(m) && typeof m.name === 'string')
+  );
+}
+
 function browserStorage() {
   try {
     return globalThis.localStorage ?? null;
@@ -145,17 +163,20 @@ export function createDemoBackend({ storage = browserStorage(), now = () => new 
   function load() {
     try {
       const raw = storage?.getItem(KEY);
-      if (raw) return JSON.parse(raw);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (isDemoState(parsed)) return parsed;
     } catch {
       /* fall through to a fresh seed */
     }
     return seedDemo(now());
   }
+  /** False when the browser refused to store it (usually: storage full). */
   function save() {
     try {
       storage?.setItem(KEY, JSON.stringify(state));
+      return true;
     } catch {
-      /* storage full or unavailable: keep working in memory */
+      return !storage; // no storage at all: we run in memory on purpose
     }
   }
   const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -171,15 +192,17 @@ export function createDemoBackend({ storage = browserStorage(), now = () => new 
     }
   }
   function commit() {
-    save();
+    const saved = save();
     queueMicrotask(emit);
+    // The change still shows (in memory), but tell the user it won't survive a reload.
+    if (!saved) throw fail('storage-full');
   }
   const user = () => state.user && { uid: ME, name: state.user.name, email: null, photoURL: null };
   const myName = () => state.members[ME]?.name ?? state.user?.name ?? '';
   const newId = (p) => `${p}${Date.now().toString(36)}${(counter++).toString(36)}`;
   const need = (id) => {
     const b = state.books[id];
-    if (!b) throw Object.assign(new Error('not-found'), { code: 'not-found' });
+    if (!b) throw fail('not-found');
     return b;
   };
 
@@ -213,7 +236,11 @@ export function createDemoBackend({ storage = browserStorage(), now = () => new 
         state.members[ME].name = clean;
       }
       for (const p of Object.values(state.progress)) if (p.uid === ME) p.name = clean;
-      commit();
+      try {
+        commit();
+      } catch {
+        /* storage full: the demo still works for this visit */
+      }
       for (const cb of authListeners) cb(user());
     },
     async signOut() {
@@ -225,7 +252,8 @@ export function createDemoBackend({ storage = browserStorage(), now = () => new 
       const keepUser = state.user;
       state = seedDemo(now());
       state.user = null;
-      commit();
+      save();
+      queueMicrotask(emit);
       if (keepUser) await this.signInDemo(keepUser.name);
     },
 
@@ -267,9 +295,10 @@ export function createDemoBackend({ storage = browserStorage(), now = () => new 
       commit();
     },
 
-    async pickBook(bookId, month) {
+    async pickBook(bookId, month, since = null) {
+      if (since != null && (state.meta.lastPick?.at ?? 0) !== since) throw fail('someone-else-spun');
       const b = state.books[bookId];
-      if (!b || b.status !== 'shelf') throw Object.assign(new Error('not-available'), { code: 'not-available' });
+      if (!b || b.status !== 'shelf') throw fail('not-available');
       const at = now().getTime();
       Object.assign(b, {
         status: 'picked',
@@ -328,16 +357,19 @@ export function createDemoBackend({ storage = browserStorage(), now = () => new 
 
     async updateProfile({ name, color }) {
       const m = state.members[ME];
-      if (name) {
-        m.name = name;
-        state.user.name = name;
+      const clean = cleanText(name ?? '', 40);
+      if (clean) {
+        m.name = clean;
+        state.user.name = clean;
       }
       if (color) m.color = color;
       commit();
       for (const cb of authListeners) cb(user());
     },
     async renameClub(name) {
-      state.meta.name = name;
+      const clean = cleanText(name, 80);
+      if (!clean) throw fail('invalid-argument');
+      state.meta.name = clean;
       commit();
     },
     async regenerateInvite() {
@@ -346,6 +378,7 @@ export function createDemoBackend({ storage = browserStorage(), now = () => new 
     },
     async removeMember(uid) {
       delete state.members[uid];
+      state.invite = { code: makeInviteCode() }; // the old code no longer lets them back in
       commit();
     },
     async leaveClub() {

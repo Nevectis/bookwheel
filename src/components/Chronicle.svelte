@@ -1,6 +1,6 @@
 <script>
-  import { flip } from 'svelte/animate';
-  import { fly } from 'svelte/transition';
+  import { flip } from '../lib/motion.js';
+  import { fly } from '../lib/motion.js';
   import ChronicleEntry from './ChronicleEntry.svelte';
   import { club } from '../lib/store.svelte.js';
   import { t, locale } from '../lib/i18n.svelte.js';

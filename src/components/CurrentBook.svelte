@@ -1,21 +1,21 @@
 <script>
-  import { fly, fade } from 'svelte/transition';
+  import { fly, fade } from '../lib/motion.js';
   import { cubicOut } from 'svelte/easing';
   import BookCover from './BookCover.svelte';
   import GoalList from './GoalList.svelte';
   import Icon from './Icon.svelte';
   import Stars from './Stars.svelte';
-  import { club } from '../lib/store.svelte.js';
+  import { club, landed } from '../lib/store.svelte.js';
   import { t, locale } from '../lib/i18n.svelte.js';
   import { genreById, genreSwatch } from '../lib/genres.js';
-  import { daysUntil, isoDay, monthLabel, shortDay } from '../lib/dates.js';
+  import { daysUntil, isoDay, monthLabel, parseDay, shortDay } from '../lib/dates.js';
   import { clampPage, nextGoal, percent } from '../lib/reading.js';
   import { scrollToSection, tilt } from '../lib/actions.js';
-  import { toast, ui } from '../lib/ui.svelte.js';
+  import { clock, toast, ui } from '../lib/ui.svelte.js';
 
   const book = $derived(club.current);
   const mine = $derived(book ? club.entry(book.id) : null);
-  const next = $derived(book ? nextGoal(book.goals ?? []) : null);
+  const next = $derived(book ? nextGoal(book.goals ?? [], parseDay(clock.day)) : null);
   const genre = $derived(genreById(book?.genre));
 
   let page = $state(0);
@@ -42,9 +42,10 @@
   }
 
   async function finish() {
+    const target = book;
     try {
-      await club.markFinished(book);
-      ui.review = { bookId: book.id, congrats: true };
+      await landed(club.markFinished(target));
+      ui.review = { bookId: target.id, congrats: true };
     } catch {
       /* toast shown */
     }
@@ -54,13 +55,17 @@
     e.preventDefault();
     const n = Math.floor(Number(pagesInput));
     if (!Number.isFinite(n) || n <= 0) return;
-    await club.updateBook(book.id, { pageCount: Math.min(n, 20000) });
-    pagesInput = '';
-    toast(t('edit.saved'), { tone: 'success' });
+    try {
+      await landed(club.updateBook(book.id, { pageCount: Math.min(n, 20000) }));
+      pagesInput = '';
+      toast(t('edit.saved'), { tone: 'success' });
+    } catch {
+      /* toast shown by the store */
+    }
   }
 
   function dueText(g) {
-    const d = daysUntil(g.date);
+    const d = daysUntil(g.date, parseDay(clock.day));
     if (d === 0) return t('goals.today');
     if (d === 1) return t('goals.tomorrow');
     return t('goals.inDays', { n: d });

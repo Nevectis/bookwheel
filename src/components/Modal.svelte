@@ -1,7 +1,7 @@
 <script>
   // Accessible dialog: the page behind is made `inert` by App while any dialog
   // is open, so focus can't escape. Escape and the backdrop close it.
-  import { fade, fly, scale } from 'svelte/transition';
+  import { fade, fly, scale } from '../lib/motion.js';
   import { cubicOut } from 'svelte/easing';
   import { onMount } from 'svelte';
   import Icon from './Icon.svelte';
@@ -29,10 +29,29 @@
     };
   });
 
+  const FOCUSABLE =
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
   function onkeydown(e) {
     if (e.key === 'Escape' && closable) {
       e.stopPropagation();
       onclose?.();
+    } else if (e.key === 'Tab' && panel) {
+      // Keep Tab inside this dialog (the page behind is inert, but a dialog
+      // underneath this one isn't).
+      e.stopPropagation();
+      const items = [...panel.querySelectorAll(FOCUSABLE)].filter((el) => el.getClientRects().length);
+      if (!items.length) return e.preventDefault();
+      const first = items[0];
+      const last = items.at(-1);
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === panel || !panel.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !panel.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
     }
   }
 </script>

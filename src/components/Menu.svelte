@@ -1,19 +1,32 @@
 <script>
-  // Small popover menu anchored to a trigger button.
-  import { scale } from 'svelte/transition';
+  // Small popover anchored to a trigger button (a disclosure: plain buttons
+  // inside, Tab moves through them, Escape closes and returns to the trigger).
+  import { scale } from '../lib/motion.js';
   import { clickOutside } from '../lib/actions.js';
 
   let { label, trigger, children, align = 'right', testid } = $props();
   let open = $state(false);
+  let button = $state();
+  const id = `pop-${Math.random().toString(36).slice(2, 9)}`;
   const close = () => (open = false);
+
+  function onkeydown(e) {
+    if (!open || e.key !== 'Escape') return;
+    e.stopPropagation();
+    close();
+    button?.focus();
+  }
 </script>
+
+<svelte:window {onkeydown} />
 
 <div class="menu" use:clickOutside={close}>
   <button
+    bind:this={button}
     type="button"
     class="trigger"
-    aria-haspopup="menu"
     aria-expanded={open}
+    aria-controls={id}
     aria-label={label}
     onclick={() => (open = !open)}
     data-testid={testid}
@@ -21,12 +34,12 @@
     {@render trigger()}
   </button>
   {#if open}
+    <!-- Clicks bubble up from the buttons inside; keyboard users press those buttons. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
+      {id}
       class="pop {align}"
-      role="menu"
-      tabindex="-1"
       transition:scale={{ start: 0.92, duration: 160 }}
-      onkeydown={(e) => e.key === 'Escape' && close()}
       onclick={(e) => e.target.closest('[data-close]') && close()}
     >
       {@render children(close)}

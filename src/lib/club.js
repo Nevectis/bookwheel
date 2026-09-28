@@ -51,6 +51,9 @@ export function initials(name) {
   return (first + second).toUpperCase();
 }
 
+/** A member's colour as stored, if it is a plain #rrggbb (it ends up in CSS). */
+export const safeColor = (c, fallback = '#9a8b7d') => (typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c : fallback);
+
 export const cleanText = (s, max) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 /** The fields a book document may carry, trimmed to the sizes the rules allow. */

@@ -13,13 +13,14 @@
     setTimeout(() => (popped = 0), 450);
   }
   function onkeydown(e) {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-      e.preventDefault();
-      set(Math.min(5, (value || 0) + 1));
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      set(Math.max(1, (value || 1) - 1));
-    }
+    let v;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') v = Math.min(5, (value || 0) + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') v = Math.max(1, (value || 1) - 1);
+    else return;
+    e.preventDefault();
+    set(v);
+    // Focus follows the checked star (roving tabindex), as in any radio group.
+    e.currentTarget.parentElement?.children[v - 1]?.focus();
   }
   const STAR = 'M12 2.6l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.4l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z';
 </script>

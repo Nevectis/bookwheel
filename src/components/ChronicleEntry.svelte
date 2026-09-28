@@ -1,5 +1,5 @@
 <script>
-  import { slide, fly, scale } from 'svelte/transition';
+  import { slide, fly, scale } from '../lib/motion.js';
   import { cubicOut } from 'svelte/easing';
   import Avatar from './Avatar.svelte';
   import BookCover from './BookCover.svelte';
@@ -30,7 +30,7 @@
   );
 
   async function backToShelf() {
-    const ok = await confirmDialog(`${t('chron.backToShelf')}: „${book.title}“?`, { confirmLabel: t('chron.backToShelf') });
+    const ok = await confirmDialog(t('chron.backToShelfConfirm', { title: book.title }), { confirmLabel: t('chron.backToShelf') });
     if (ok) club.unpick(book).catch(() => {});
   }
 </script>
@@ -49,18 +49,18 @@
         <h3>{book.title}</h3>
         <p class="author">{book.author}</p>
       </div>
-      <Menu label="…" testid="entry-menu">
+      <Menu label={t('chron.options', { title: book.title })} testid="entry-menu">
         {#snippet trigger()}
           <span class="btn btn-ghost btn-icon btn-sm"><Icon name="more" size={18} stroke={1.6} /></span>
         {/snippet}
         {#snippet children(close)}
           {#if !isCurrent}
-            <button class="mi" role="menuitem" data-close onclick={() => club.setCurrent(book)}><Icon name="book" size={16} />{t('chron.setCurrent')}</button>
+            <button class="mi" data-close onclick={() => club.setCurrent(book)}><Icon name="book" size={16} />{t('chron.setCurrent')}</button>
           {/if}
-          <button class="mi" role="menuitem" data-close onclick={() => (monthOpen = true)}><Icon name="calendar" size={16} />{t('chron.moveMonth')}</button>
-          <button class="mi" role="menuitem" data-close onclick={() => (ui.bookForm = { mode: 'edit', bookId: book.id })}><Icon name="edit" size={16} />{t('common.edit')}</button>
+          <button class="mi" data-close onclick={() => (monthOpen = true)}><Icon name="calendar" size={16} />{t('chron.moveMonth')}</button>
+          <button class="mi" data-close onclick={() => (ui.bookForm = { mode: 'edit', bookId: book.id })}><Icon name="edit" size={16} />{t('common.edit')}</button>
           <div class="sep"></div>
-          <button class="mi danger" role="menuitem" data-close onclick={backToShelf}><Icon name="undo" size={16} />{t('chron.backToShelf')}</button>
+          <button class="mi danger" data-close onclick={backToShelf}><Icon name="undo" size={16} />{t('chron.backToShelf')}</button>
         {/snippet}
       </Menu>
     </div>

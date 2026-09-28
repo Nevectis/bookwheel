@@ -1,7 +1,7 @@
 <script>
   // Shown after sign-in to people who aren't members yet: found the club
   // (first person) or join it with the invite code.
-  import { fly } from 'svelte/transition';
+  import { fly } from '../lib/motion.js';
   import BookSpread from './BookSpread.svelte';
   import { club } from '../lib/store.svelte.js';
   import { t } from '../lib/i18n.svelte.js';
@@ -18,6 +18,7 @@
   async function submit(e) {
     e.preventDefault();
     error = '';
+    if (!memberName.trim() || (mode === 'create' && !clubName.trim())) return (error = t('club.needName'));
     busy = true;
     try {
       if (mode === 'create') await club.createClub(clubName, memberName);

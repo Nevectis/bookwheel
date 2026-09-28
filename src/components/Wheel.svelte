@@ -29,6 +29,7 @@
     hubLabel = '',
     emptyText = '',
     ringText = 'Bookwheel',
+    label = '',
   } = $props();
 
   const R = 222; // turning disc
@@ -168,6 +169,7 @@
   });
 
   function flick(strength) {
+    if (prefersReducedMotion()) return;
     const s = Number.isFinite(strength) ? Math.max(0, Math.min(1, strength)) : 0.5;
     ribbonEl?.animate?.(
       [{ transform: 'rotate(0deg)' }, { transform: `rotate(${-3 - 7 * s}deg)` }, { transform: 'rotate(0deg)' }],
@@ -243,7 +245,7 @@
 <div class="volvelle" class:spinning class:has-winner={!!winnerId} class:empty={!slices.length}>
   {#key pop}
     <div class="disc">
-      <svg viewBox="-262 -262 524 524" role="img" aria-label={hubLabel}>
+      <svg viewBox="-262 -262 524 524" role="img" aria-label={label || hubLabel}>
         <defs>
           <pattern id="vv-linen" width="3" height="3" patternUnits="userSpaceOnUse">
             <path d="M0 .5H3M.5 0V3" stroke="#fff" stroke-opacity=".07" stroke-width=".5" />

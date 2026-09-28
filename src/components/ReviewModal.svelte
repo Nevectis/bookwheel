@@ -1,13 +1,13 @@
 <script>
   import { onMount, untrack } from 'svelte';
-  import { fly } from 'svelte/transition';
+  import { fly } from '../lib/motion.js';
   import { goldLeaf } from '../lib/goldleaf.js';
   import Modal from './Modal.svelte';
   import BookCover from './BookCover.svelte';
   import Icon from './Icon.svelte';
   import StarInput from './StarInput.svelte';
   import WaxSeal from './WaxSeal.svelte';
-  import { club } from '../lib/store.svelte.js';
+  import { club, landed } from '../lib/store.svelte.js';
   import { t, formatAverage } from '../lib/i18n.svelte.js';
   import { prefersReducedMotion, toast } from '../lib/ui.svelte.js';
 
@@ -21,9 +21,13 @@
   let busy = $state(false);
   let canvas = $state();
 
+  let open = true;
   onMount(() => {
-    if (!congrats || prefersReducedMotion() || !canvas) return;
-    return goldLeaf(canvas, { amount: 0.6 });
+    const stop = congrats && !prefersReducedMotion() && canvas ? goldLeaf(canvas, { amount: 0.6 }) : null;
+    return () => {
+      open = false;
+      stop?.();
+    };
   });
 
   async function submit(e) {
@@ -31,17 +35,18 @@
     if (!rating) return (error = t('review.needStars'));
     busy = true;
     const target = book;
+    const before = club.summary(target);
     try {
-      const { wasComplete } = await club.rate(target, rating, review);
+      await landed(club.rate(target, rating, review));
       const s = club.summary(club.book(target.id) ?? target);
-      if (s.complete && !wasComplete) {
+      if (s.complete && !before.complete) {
         toast(`${target.title}: ${t('chron.avg', { value: formatAverage(s.average) })} ★`, { tone: 'success', duration: 6000 });
-      } else if (s.ratedCount > 1 && !mine?.rating) {
+      } else if (s.ratedCount > 1 && !before.revealed) {
         toast(t('review.revealed'), { tone: 'success', duration: 5500 });
       } else {
         toast(t('review.saved'), { tone: 'success' });
       }
-      onclose();
+      if (open) onclose(); // not if it was closed meanwhile (the next dialog may be open)
     } catch (err) {
       console.error(err);
       busy = false;

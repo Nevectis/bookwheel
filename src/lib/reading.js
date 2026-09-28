@@ -2,8 +2,15 @@ import { daysUntil, isoDay } from './dates.js';
 
 export const progressId = (bookId, uid) => `${bookId}_${uid}`;
 
+const validGoal = (g) =>
+  !!g && typeof g.id === 'string' && typeof g.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(g.date) && Number.isInteger(g.page);
+
+/** Goals by date, skipping malformed or duplicate entries (the list is shared data). */
 export function sortGoals(goals) {
-  return [...(goals ?? [])].sort((a, b) => a.date.localeCompare(b.date) || a.page - b.page);
+  const seen = new Set();
+  return (Array.isArray(goals) ? goals : [])
+    .filter((g) => validGoal(g) && !seen.has(g.id) && seen.add(g.id))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.page - b.page);
 }
 
 /** The first goal due today or later. */

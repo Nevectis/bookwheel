@@ -2,8 +2,8 @@
   // "Wer liest wie weit?" – a row of library checkout cards under the wheel,
   // one per member: who, which book, how far, and a rubber stamp for the
   // state against the reading goal. Re-sorts live as people read.
-  import { flip } from 'svelte/animate';
-  import { fly, scale } from 'svelte/transition';
+  import { flip } from '../lib/motion.js';
+  import { fly, scale } from '../lib/motion.js';
   import { cubicOut } from 'svelte/easing';
   import Avatar from './Avatar.svelte';
   import Icon from './Icon.svelte';
@@ -11,6 +11,9 @@
   import { club } from '../lib/store.svelte.js';
   import { t } from '../lib/i18n.svelte.js';
   import { percent, readerGoalState } from '../lib/reading.js';
+  import { safeColor } from '../lib/club.js';
+  import { parseDay } from '../lib/dates.js';
+  import { clock } from '../lib/ui.svelte.js';
 
   const book = $derived(club.current);
   const rows = $derived.by(() => {
@@ -26,7 +29,7 @@
           entry: e,
           page,
           pct: percent(page, book.pageCount, e?.finished),
-          goal: readerGoalState(e, book.goals ?? []),
+          goal: readerGoalState(e, book.goals ?? [], parseDay(clock.day)),
           me: m.id === club.user?.uid,
           showRating: revealed && e?.rating,
         };
@@ -66,8 +69,8 @@
     </div>
     {#if rows.length > 2}
       <div class="arrows">
-        <button class="btn btn-icon btn-sm" type="button" disabled={!canLeft} onclick={() => nudge(-1)} aria-label="←"><Icon name="left" size={16} stroke={1.6} /></button>
-        <button class="btn btn-icon btn-sm" type="button" disabled={!canRight} onclick={() => nudge(1)} aria-label="→"><Icon name="right" size={16} stroke={1.6} /></button>
+        <button class="btn btn-icon btn-sm" type="button" disabled={!canLeft} onclick={() => nudge(-1)} aria-label={t('ticker.prev')}><Icon name="left" size={16} stroke={1.6} /></button>
+        <button class="btn btn-icon btn-sm" type="button" disabled={!canRight} onclick={() => nudge(1)} aria-label={t('ticker.next')}><Icon name="right" size={16} stroke={1.6} /></button>
       </div>
     {/if}
   </div>
@@ -83,7 +86,7 @@
           class:me={r.me}
           animate:flip={{ duration: 500 }}
           in:fly={{ y: 22, duration: 600, delay: 70 * i, easing: cubicOut }}
-          style:--c={r.member.color}
+          style:--c={safeColor(r.member.color)}
           style:--tilt="{((i % 3) - 1) * 0.7}deg"
         >
           <div class="slip-head">

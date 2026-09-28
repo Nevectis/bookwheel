@@ -7,8 +7,9 @@
 <Modal onclose={() => settleConfirm(false)} labelledby="confirm-msg" size="sm">
   <p id="confirm-msg" class="msg">{ui.confirm?.message}</p>
   <div class="actions">
-    <button class="btn btn-ghost" type="button" onclick={() => settleConfirm(false)}>{t('common.cancel')}</button>
-    <button class="btn {ui.confirm?.danger ? 'btn-danger' : 'btn-primary'}" type="button" onclick={() => settleConfirm(true)} data-autofocus data-testid="confirm-yes">
+    <!-- Destructive questions start on "Cancel", so a stray Enter can't delete anything. -->
+    <button class="btn btn-ghost" type="button" onclick={() => settleConfirm(false)} data-autofocus={ui.confirm?.danger ? true : undefined}>{t('common.cancel')}</button>
+    <button class="btn {ui.confirm?.danger ? 'btn-danger' : 'btn-primary'}" type="button" onclick={() => settleConfirm(true)} data-autofocus={ui.confirm?.danger ? undefined : true} data-testid="confirm-yes">
       {ui.confirm?.confirmLabel ?? 'OK'}
     </button>
   </div>

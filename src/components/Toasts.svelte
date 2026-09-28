@@ -1,6 +1,6 @@
 <script>
-  import { flip } from 'svelte/animate';
-  import { fly, scale } from 'svelte/transition';
+  import { flip } from '../lib/motion.js';
+  import { fly, scale } from '../lib/motion.js';
   import { cubicOut } from 'svelte/easing';
   import Icon from './Icon.svelte';
   import { dismissToast, ui } from '../lib/ui.svelte.js';

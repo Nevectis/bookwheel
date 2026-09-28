@@ -37,9 +37,9 @@
     <fieldset>
       <legend class="label">{t('profile.color')}</legend>
       <div class="swatches">
-        {#each MEMBER_COLORS as c}
+        {#each MEMBER_COLORS as c, i}
           <label class="sw" class:on={color === c} style:--c={c}>
-            <input type="radio" name="color" value={c} bind:group={color} class="sr-only" />
+            <input type="radio" name="color" value={c} bind:group={color} class="sr-only" aria-label={t('profile.colorN', { n: i + 1 })} />
             {#if color === c}<Icon name="check" size={16} stroke={3} />{/if}
           </label>
         {/each}

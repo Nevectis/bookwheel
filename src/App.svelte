@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { fade } from 'svelte/transition';
+  import { fade } from './lib/motion.js';
   import AuthScreen from './components/AuthScreen.svelte';
   import BookFormModal from './components/BookFormModal.svelte';
   import Chronicle from './components/Chronicle.svelte';
@@ -20,7 +20,7 @@
   import WheelCard from './components/WheelCard.svelte';
   import { club } from './lib/store.svelte.js';
   import { i18n, t } from './lib/i18n.svelte.js';
-  import { anyDialogOpen, initTheme, ui } from './lib/ui.svelte.js';
+  import { anyDialogOpen, initTheme, otherDialogOpen, ui } from './lib/ui.svelte.js';
   import { reveal, scrollToSection } from './lib/actions.js';
 
   onMount(() => {
@@ -53,7 +53,7 @@
   <div class="loading">
     <p class="err">{t('common.error')}</p>
     <code>{club.error}</code>
-    <button class="btn" onclick={() => location.reload()}><Icon name="spin" size={16} /> Reload</button>
+    <button class="btn" onclick={() => location.reload()}><Icon name="spin" size={16} /> {t('common.reload')}</button>
   </div>
 {:else if club.phase === 'ready'}
   <div class="app" inert={dialogOpen} in:fade={{ duration: 400 }}>
@@ -112,7 +112,8 @@
   </div>
 {/if}
 
-{#if ui.result}
+<!-- Someone else's spin never pops up over (or steals focus from) a dialog you're using. -->
+{#if ui.result && !otherDialogOpen()}
   <SpinResultModal bookId={ui.result.bookId} byName={ui.result.byName} onclose={() => (ui.result = null)} />
 {/if}
 {#if ui.review}

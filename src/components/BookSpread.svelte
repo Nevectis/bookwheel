@@ -1,10 +1,10 @@
 <script>
   // An open book: marbled endpaper with a bookplate on the left page,
   // the content (sign-in, club setup) on the right page.
-  import { fade, fly } from 'svelte/transition';
+  import { fade, fly } from '../lib/motion.js';
   import { cubicOut } from 'svelte/easing';
   import Mark from './Mark.svelte';
-  import { i18n, setLang } from '../lib/i18n.svelte.js';
+  import { i18n, setLang, t } from '../lib/i18n.svelte.js';
 
   let { owner = 'Bookwheel', motto = '', children } = $props();
 </script>
@@ -19,9 +19,9 @@
     </div>
   </aside>
   <section class="leaf">
-    <div class="lang" role="group" aria-label="Language">
-      <button class:on={i18n.lang === 'de'} onclick={() => setLang('de')}>DE</button>
-      <button class:on={i18n.lang === 'en'} onclick={() => setLang('en')}>EN</button>
+    <div class="lang" role="group" aria-label={t('menu.language')}>
+      <button class:on={i18n.lang === 'de'} aria-pressed={i18n.lang === 'de'} onclick={() => setLang('de')}>DE</button>
+      <button class:on={i18n.lang === 'en'} aria-pressed={i18n.lang === 'en'} onclick={() => setLang('en')}>EN</button>
     </div>
     <div class="content" in:fly={{ y: 20, duration: 900, delay: 150, easing: cubicOut }}>
       {@render children()}

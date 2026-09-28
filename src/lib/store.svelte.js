@@ -5,7 +5,20 @@ import { pickMemberColor } from './club.js';
 import { suggestMonth } from './dates.js';
 import { t } from './i18n.svelte.js';
 import { progressId, ratingSummary } from './reading.js';
-import { toast, ui } from './ui.svelte.js';
+import { settleConfirm, toast, ui } from './ui.svelte.js';
+
+const FRESH_PICK_MS = 10 * 60_000;
+
+/**
+ * Waits for a write to be confirmed, but not for long: Firestore applies writes
+ * locally at once and only confirms them when the server has them, which never
+ * happens offline. Rejects only if the write fails within that moment (later
+ * failures still get their error toast from the store).
+ */
+export function landed(write, ms = 1200) {
+  write.catch(() => {});
+  return Promise.race([write, new Promise((resolve) => setTimeout(resolve, ms))]);
+}
 
 class ClubStore {
   backend = null;
@@ -38,6 +51,8 @@ class ClubStore {
   #unsubscribe = null;
   #seenPickAt = undefined;
   #colorChecked = false;
+  #authSeq = 0; // ignores club lookups that finish after the user changed
+  #lastRecheck = 0;
 
   async init() {
     try {
@@ -58,6 +73,7 @@ class ClubStore {
       return;
     }
     this.#leave();
+    this.#authSeq++;
     this.user = user;
     if (!user) {
       this.phase = 'signed-out';
@@ -68,12 +84,18 @@ class ClubStore {
   }
 
   async refreshStatus() {
+    const seq = this.#authSeq;
     try {
       const s = await this.backend.clubStatus();
+      if (seq !== this.#authSeq) return; // signed out or switched account meanwhile
       this.clubName = s.clubName;
       if (s.isMember) this.#enter();
-      else this.phase = s.clubExists ? 'join' : 'create';
+      else {
+        this.#leave();
+        this.phase = s.clubExists ? 'join' : 'create';
+      }
     } catch (e) {
+      if (seq !== this.#authSeq) return;
       console.error(e);
       this.error = String(e?.code ?? e?.message ?? e);
       this.phase = 'error';
@@ -92,8 +114,12 @@ class ClubStore {
       },
       (err) => {
         // Usually "permission-denied" after being removed from the club.
+        // Re-check at most every few seconds so a misconfigured project can't loop.
         console.warn('Listener error', err);
-        if (err?.code === 'permission-denied') this.refreshStatus();
+        if (err?.code === 'permission-denied' && Date.now() - this.#lastRecheck > 5000) {
+          this.#lastRecheck = Date.now();
+          this.refreshStatus();
+        }
       },
     );
   }
@@ -109,6 +135,10 @@ class ClubStore {
     this.books = [];
     this.progress = [];
     this.loaded = { meta: false, members: false, books: false, progress: false };
+    // Nothing club-related may stay open over the sign-in or join screen.
+    ui.result = ui.review = ui.bookForm = null;
+    ui.clubOpen = ui.profileOpen = false;
+    if (ui.confirm) settleConfirm(false);
   }
 
   #onMeta(meta) {
@@ -119,7 +149,10 @@ class ClubStore {
     }
     if (pick && pick.at > this.#seenPickAt) {
       this.#seenPickAt = pick.at;
-      if (pick.by !== this.user?.uid && !ui.result) ui.result = { bookId: pick.bookId, byName: pick.byName || '?' };
+      // The first snapshot can come from the offline cache, so a spin from days
+      // ago may still look "new" here: only announce spins from the last minutes.
+      const fresh = Date.now() - pick.at < FRESH_PICK_MS;
+      if (fresh && pick.by !== this.user?.uid && !ui.result) ui.result = { bookId: pick.bookId, byName: pick.byName || '?' };
     }
   }
 
@@ -167,7 +200,7 @@ class ClubStore {
       return r;
     } catch (e) {
       console.error(e);
-      toast(t(errorKey), { tone: 'error' });
+      toast(t(e?.code === 'storage-full' ? 'common.storageFull' : errorKey), { tone: 'error' });
       throw e;
     }
   }
@@ -176,13 +209,19 @@ class ClubStore {
   }
 
   signInDemo(name) {
-    return this.backend.signInDemo(name);
+    return this.backend.signInDemo(String(name ?? '').trim() || t('auth.guest'));
   }
   signOut() {
     return this.backend.signOut();
   }
   async createClub(clubName, memberName) {
-    await this.backend.createClub({ clubName, memberName });
+    try {
+      await this.backend.createClub({ clubName, memberName });
+    } catch (e) {
+      // Someone else may have founded it a moment earlier: show "join" instead.
+      await this.refreshStatus();
+      throw e;
+    }
     await this.refreshStatus();
   }
   async joinClub(code, memberName) {
@@ -205,9 +244,13 @@ class ClubStore {
     });
   }
 
+  /** When a spin starts: which pick it follows (to refuse it if someone else picks meanwhile). */
+  pickMarker() {
+    return this.meta?.lastPick?.at ?? 0;
+  }
   /** Marks the book as picked for the suggested month and makes it current. */
-  pick(book) {
-    return this.backend.pickBook(book.id, suggestMonth(this.picked));
+  pick(book, since = null) {
+    return this.backend.pickBook(book.id, suggestMonth(this.picked), since);
   }
   unpick(book) {
     return this.#run(() => this.backend.unpickBook(book.id), { ok: t('result.undone', { title: book.title }) });
@@ -241,10 +284,9 @@ class ClubStore {
   markUnfinished(book) {
     return this.#run(() => this.backend.saveProgress(book.id, { finished: false }));
   }
-  async rate(book, rating, review) {
+  rate(book, rating, review) {
     const prev = this.entry(book.id);
-    const wasComplete = this.summary(book).complete;
-    await this.#run(() =>
+    return this.#run(() =>
       this.backend.saveProgress(book.id, {
         finished: true,
         finishedAt: prev?.finishedAt ?? Date.now(),
@@ -254,7 +296,6 @@ class ClubStore {
         reviewedAt: Date.now(),
       }),
     );
-    return { wasComplete };
   }
 
   updateProfile(patch) {

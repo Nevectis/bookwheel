@@ -1,5 +1,6 @@
 // Client-only UI state: open dialogs, toasts, theme and sound preferences.
 import { prefs } from './prefs.js';
+import { isoDay } from './dates.js';
 
 export const ui = $state({
   /** Spin result popup: { bookId, byName } – byName is set when someone else spun. */
@@ -17,8 +18,21 @@ export const ui = $state({
   sound: prefs.get('sound', 'on') !== 'off',
 });
 
-export const anyDialogOpen = () =>
-  !!(ui.result || ui.review || ui.bookForm || ui.clubOpen || ui.profileOpen || ui.confirm);
+/** Today's date, kept current past midnight and when the tab wakes up, so
+ *  "today", "overdue" and "in 3 days" never go stale on a page left open. */
+export const clock = $state({ day: isoDay() });
+if (typeof document !== 'undefined') {
+  const refresh = () => {
+    const d = isoDay();
+    if (d !== clock.day) clock.day = d;
+  };
+  setInterval(refresh, 60_000);
+  document.addEventListener('visibilitychange', refresh);
+}
+
+/** A dialog other than the spin result is open (the result waits until it closes). */
+export const otherDialogOpen = () => !!(ui.review || ui.bookForm || ui.clubOpen || ui.profileOpen || ui.confirm);
+export const anyDialogOpen = () => !!ui.result || otherDialogOpen();
 
 let toastId = 0;
 export function toast(message, { tone = 'info', action = null, actionLabel = '', duration = 4200 } = {}) {

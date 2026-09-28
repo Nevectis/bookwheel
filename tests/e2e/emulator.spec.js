@@ -101,7 +101,7 @@ test('founding, joining by invite code, spinning, progress and the rating reveal
   await expect(bobOnAlice).toContainText('S. 30 / 272');
   await expect(bobOnAlice).toContainText('noch 20 S. bis zum Ziel');
 
-  // ── Both finish and rate; the average appears only once both have rated ──
+  // ── Both finish and rate; each sees the others' ratings only after rating ──
   await alice.getByTestId('mark-read').click();
   await alice.getByRole('radio', { name: '5 Sterne' }).click();
   await alice.getByTestId('review-submit').click();

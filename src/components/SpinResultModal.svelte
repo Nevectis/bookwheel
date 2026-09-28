@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { fly } from 'svelte/transition';
+  import { fly } from '../lib/motion.js';
   import { cubicOut } from 'svelte/easing';
   import { goldLeaf } from '../lib/goldleaf.js';
   import Modal from './Modal.svelte';
@@ -16,7 +16,7 @@
 
   const book = $derived(club.book(bookId));
   const genre = $derived(genreById(book?.genre));
-  const months = $derived(monthOptions(undefined, 2, 8));
+  const months = $derived(monthOptions(undefined, 2, 8, book?.month));
   let canvas = $state();
   let undoing = $state(false);
 
@@ -78,7 +78,7 @@
         </label>
 
         <div class="actions" in:fly={{ y: 8, delay: 880, duration: 800, easing: cubicOut }}>
-          <button class="btn btn-primary big" type="button" onclick={onclose} data-testid="result-start">
+          <button class="btn btn-primary big" type="button" onclick={onclose} data-testid="result-start" data-autofocus>
             {t('result.start')}
           </button>
           {#if !byName}

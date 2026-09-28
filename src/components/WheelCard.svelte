@@ -14,6 +14,8 @@
   let winnerId = $state(null);
   let wheel = $state();
   let announce = $state('');
+  let popupTimer;
+  $effect(() => () => clearTimeout(popupTimer));
 
   const counts = $derived.by(() => {
     const c = {};
@@ -42,6 +44,7 @@
     }
     const pool = items;
     const book = pool[randomIndex(pool.length)];
+    const since = club.pickMarker();
     spinning = true;
     announce = t('wheel.spinning');
     // Only commit once the wheel has stopped, so nobody's screen (the current
@@ -49,7 +52,7 @@
     // transaction, so a book someone else took meanwhile is refused.
     const landed = await wheel.spin(book.id);
     const res = landed
-      ? await club.pick(book).then(
+      ? await club.pick(book, since).then(
           () => ({ ok: true }),
           (e) => ({ ok: false, e }),
         )
@@ -57,7 +60,16 @@
     spinning = false;
     if (!landed || !res.ok) {
       console.warn(res.e);
-      toast(res.e?.code === 'not-available' ? t('wheel.taken', { title: book.title }) : t('common.error'), { tone: 'error' });
+      const code = res.e?.code;
+      const msg =
+        code === 'someone-else-spun'
+          ? t('wheel.otherSpun')
+          : code === 'not-available'
+            ? t('wheel.taken', { title: book.title })
+            : code === 'storage-full'
+              ? t('common.storageFull')
+              : t('common.error');
+      toast(msg, { tone: 'error' });
       announce = '';
       return;
     }
@@ -65,7 +77,7 @@
     holding = true;
     if (ui.sound) chime();
     announce = `${book.title} — ${book.author}`;
-    setTimeout(
+    popupTimer = setTimeout(
       () => {
         ui.result = { bookId: book.id, byName: null };
         holding = false;
@@ -116,6 +128,7 @@
       {spinning}
       disabled={!items.length}
       hubLabel={t('wheel.spin')}
+      label={t('wheel.aria', { n: items.length, titles: items.map((b) => `${b.title} (${b.author})`).join('; ') })}
       emptyText={club.shelf.length ? '' : t('wheel.emptyCenter')}
       ringText={club.meta?.name || 'Bookwheel'}
       onhub={spin}

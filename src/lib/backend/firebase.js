@@ -56,6 +56,7 @@ export function createFirebaseBackend({ config, emulator = false }) {
   }
 
   const metaRef = doc(db, 'club', 'meta');
+  const publicRef = doc(db, 'club', 'public'); // just the name, for non-members
   const inviteRef = doc(db, 'club', 'invite');
   const memberRef = (uid) => doc(db, 'members', uid);
   const bookRef = (id) => doc(db, 'books', id);
@@ -109,21 +110,23 @@ export function createFirebaseBackend({ config, emulator = false }) {
     },
 
     async clubStatus() {
-      const [m, me] = await Promise.all([getDoc(metaRef), getDoc(memberRef(uid()))]);
-      return { clubExists: m.exists(), clubName: m.data()?.name ?? '', isMember: me.exists() };
+      const [p, me] = await Promise.all([getDoc(publicRef), getDoc(memberRef(uid()))]);
+      return { clubExists: p.exists() || me.exists(), clubName: p.data()?.name ?? '', isMember: me.exists() };
     },
     async createClub({ clubName, memberName }) {
       const me = uid();
       const code = makeInviteCode();
       const now = Date.now();
+      const name = cleanText(clubName, 80);
       const batch = writeBatch(db);
       batch.set(metaRef, {
-        name: cleanText(clubName, 80),
+        name,
         ownerUid: me,
         createdAt: now,
         currentBookId: null,
         lastPick: null,
       });
+      batch.set(publicRef, { name });
       batch.set(inviteRef, { code });
       batch.set(memberRef(me), {
         name: cleanText(memberName, 40),
@@ -204,12 +207,14 @@ export function createFirebaseBackend({ config, emulator = false }) {
       await setDoc(bookRef(id), data);
     },
 
-    async pickBook(bookId, month) {
+    /** `since`: lastPick.at when this spin started; if someone else picked meanwhile, refuse. */
+    async pickBook(bookId, month, since = null) {
       const me = uid();
       const name = myName();
       await runTransaction(db, async (tx) => {
         const b = await tx.get(bookRef(bookId));
         const m = await tx.get(metaRef);
+        if (since != null && (m.data()?.lastPick?.at ?? 0) !== since) throw fail('someone-else-spun');
         if (!b.exists() || b.data().status !== 'shelf') throw fail('not-available');
         const at = Date.now();
         tx.update(bookRef(bookId), {
@@ -283,13 +288,22 @@ export function createFirebaseBackend({ config, emulator = false }) {
       if (patch.name && auth.currentUser) await updateProfile(auth.currentUser, { displayName: patch.name });
     },
     async renameClub(name) {
-      await updateDoc(metaRef, { name: cleanText(name, 80) });
+      const clean = cleanText(name, 80);
+      if (!clean) throw fail('invalid-argument');
+      const batch = writeBatch(db);
+      batch.update(metaRef, { name: clean });
+      batch.set(publicRef, { name: clean });
+      await batch.commit();
     },
     async regenerateInvite() {
       await setDoc(inviteRef, { code: makeInviteCode() });
     },
+    /** Founder only. Also retires the invite code, so the old code can't be used to walk back in. */
     async removeMember(memberId) {
-      await deleteDoc(memberRef(memberId));
+      const batch = writeBatch(db);
+      batch.delete(memberRef(memberId));
+      batch.set(inviteRef, { code: makeInviteCode() });
+      await batch.commit();
     },
     async leaveClub() {
       await deleteDoc(memberRef(uid()));

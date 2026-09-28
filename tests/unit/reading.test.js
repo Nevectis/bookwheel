@@ -6,8 +6,10 @@ import {
   percent,
   ratingSummary,
   readerGoalState,
+  sortGoals,
   starFills,
 } from '../../src/lib/reading.js';
+import { safeColor } from '../../src/lib/club.js';
 
 const now = new Date(2026, 9, 5); // 5 Oct 2026
 const goals = [
@@ -31,6 +33,29 @@ describe('goals', () => {
     expect(readerGoalState({ page: 1, finished: true }, goals, now).state).toBe('finished');
     expect(readerGoalState({ page: 1 }, [], now).state).toBe('none');
     expect(readerGoalState(undefined, goals, now)).toMatchObject({ state: 'behind', pagesLeft: 20 });
+  });
+});
+
+describe('shared data from other members', () => {
+  it('skips malformed and duplicate goals instead of crashing', () => {
+    const messy = [
+      { id: 'g1', date: '2026-10-10', page: 50 },
+      { id: 1, date: 20261010, page: 'x' },
+      null,
+      { id: 'g2', date: 'soon', page: 10 },
+      { id: 'g1', date: '2026-10-12', page: 60 },
+      { id: 'g3', date: '2026-10-01', page: 20 },
+    ];
+    expect(sortGoals(messy).map((g) => g.id)).toEqual(['g3', 'g1']);
+    expect(sortGoals('nope')).toEqual([]);
+    expect(nextGoal(messy, now).id).toBe('g1');
+  });
+
+  it('only lets plain hex colours into CSS', () => {
+    expect(safeColor('#b2456e')).toBe('#b2456e');
+    expect(safeColor('url(//evil.example/x)')).toBe('#9a8b7d');
+    expect(safeColor('red; background: url(x)', 'var(--x)')).toBe('var(--x)');
+    expect(safeColor(null)).toBe('#9a8b7d');
   });
 });
 

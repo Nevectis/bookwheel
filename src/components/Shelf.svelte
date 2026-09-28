@@ -1,6 +1,6 @@
 <script>
-  import { flip } from 'svelte/animate';
-  import { fly, scale } from 'svelte/transition';
+  import { flip } from '../lib/motion.js';
+  import { fly, scale } from '../lib/motion.js';
   import { cubicIn, cubicOut } from 'svelte/easing';
   import BookCover from './BookCover.svelte';
   import Icon from './Icon.svelte';
