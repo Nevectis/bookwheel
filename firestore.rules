@@ -1,0 +1,140 @@
+rules_version = '2';
+
+// Bookwheel — one book club per Firebase project.
+//
+// • Anyone signed in may see whether the club exists (to show "create" vs "join").
+// • Whoever creates club/meta first becomes the founder and sets the invite code.
+// • You become a member by writing your own members/{uid} doc carrying the
+//   current invite code; the rules compare it with club/invite, which only
+//   members can read.
+// • Members can read everything and manage books, picks and goals together.
+// • Progress, "read" status and ratings in progress/{bookId_uid} can only be
+//   written by the person they belong to.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMember() {
+      return signedIn() && exists(/databases/$(database)/documents/members/$(request.auth.uid));
+    }
+    function isOwner() {
+      return signedIn()
+        && get(/databases/$(database)/documents/club/meta).data.ownerUid == request.auth.uid;
+    }
+    function str(v, max) {
+      return v is string && v.size() <= max;
+    }
+    function optStr(d, key, max) {
+      return !(key in d) || d[key] == null || str(d[key], max);
+    }
+    function optInt(d, key, lo, hi) {
+      return !(key in d) || d[key] == null || (d[key] is int && d[key] >= lo && d[key] <= hi);
+    }
+    function optNum(d, key) {
+      return !(key in d) || d[key] == null || d[key] is number;
+    }
+    function changed() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // ── Club ────────────────────────────────────────────────────────────────
+    match /club/meta {
+      allow get: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name', 'ownerUid', 'createdAt', 'currentBookId', 'lastPick'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && str(request.resource.data.name, 80) && request.resource.data.name.size() > 0;
+      allow update: if isMember()
+        && changed().hasOnly(['name', 'currentBookId', 'lastPick'])
+        && (!changed().hasAny(['name']) || (isOwner() && str(request.resource.data.name, 80) && request.resource.data.name.size() > 0))
+        && optStr(request.resource.data, 'currentBookId', 100)
+        && (request.resource.data.lastPick == null || request.resource.data.lastPick is map);
+    }
+
+    match /club/invite {
+      allow get: if isMember();
+      allow create: if signedIn()
+        && getAfter(/databases/$(database)/documents/club/meta).data.ownerUid == request.auth.uid
+        && validInvite();
+      allow update: if isOwner() && validInvite();
+    }
+    function validInvite() {
+      return request.resource.data.keys().hasOnly(['code'])
+        && str(request.resource.data.code, 20) && request.resource.data.code.size() >= 6;
+    }
+
+    // ── Members ─────────────────────────────────────────────────────────────
+    match /members/{memberId} {
+      allow get: if signedIn() && (request.auth.uid == memberId || isMember());
+      allow list: if isMember();
+      allow create: if signedIn() && request.auth.uid == memberId
+        && validMember(request.resource.data)
+        && request.resource.data.joinCode == getAfter(/databases/$(database)/documents/club/invite).data.code;
+      allow update: if signedIn() && request.auth.uid == memberId
+        && validMember(request.resource.data)
+        && request.resource.data.joinCode == resource.data.joinCode
+        && request.resource.data.joinedAt == resource.data.joinedAt;
+      allow delete: if signedIn() && (request.auth.uid == memberId || isOwner());
+    }
+    function validMember(d) {
+      return d.keys().hasOnly(['name', 'color', 'photoURL', 'joinedAt', 'joinCode'])
+        && str(d.name, 40) && d.name.size() > 0
+        && d.joinedAt is number
+        && optStr(d, 'color', 20)
+        && optStr(d, 'photoURL', 1000);
+    }
+
+    // ── Books (shelf + picked) ──────────────────────────────────────────────
+    match /books/{bookId} {
+      allow read: if isMember();
+      allow create: if isMember() && validBook(request.resource.data);
+      allow update: if isMember() && validBook(request.resource.data)
+        && request.resource.data.addedBy == resource.data.addedBy;
+      allow delete: if isMember();
+    }
+    function validBook(d) {
+      return d.keys().hasOnly(['title', 'author', 'genre', 'coverUrl', 'pageCount', 'addedBy', 'addedByName',
+                               'addedAt', 'status', 'month', 'pickedAt', 'pickedBy', 'pickedByName',
+                               'prevCurrentId', 'goals'])
+        && str(d.title, 200) && d.title.size() > 0
+        && str(d.author, 200)
+        && str(d.genre, 40) && d.genre.size() > 0
+        && d.addedBy is string
+        && d.status in ['shelf', 'picked']
+        && optStr(d, 'coverUrl', 400000)
+        && optInt(d, 'pageCount', 0, 20000)
+        && optStr(d, 'addedByName', 40)
+        && optStr(d, 'month', 7)
+        && optNum(d, 'pickedAt')
+        && optStr(d, 'pickedBy', 128)
+        && optStr(d, 'pickedByName', 40)
+        && optStr(d, 'prevCurrentId', 100)
+        && (!('goals' in d) || (d.goals is list && d.goals.size() <= 50));
+    }
+
+    // ── Reading progress, "read" status and ratings ─────────────────────────
+    match /progress/{entryId} {
+      allow read: if isMember();
+      allow create, update: if isMember()
+        && request.resource.data.uid == request.auth.uid
+        && entryId == request.resource.data.bookId + '_' + request.auth.uid
+        && validProgress(request.resource.data);
+      allow delete: if isMember() && resource.data.uid == request.auth.uid;
+    }
+    function validProgress(d) {
+      return d.keys().hasOnly(['uid', 'bookId', 'name', 'page', 'finished', 'finishedAt', 'rating', 'review',
+                               'reviewedAt', 'updatedAt'])
+        && str(d.bookId, 100)
+        && optStr(d, 'name', 40)
+        && optInt(d, 'page', 0, 20000)
+        && (!('finished' in d) || d.finished is bool)
+        && optInt(d, 'rating', 1, 5)
+        && optStr(d, 'review', 4000)
+        && optNum(d, 'finishedAt')
+        && optNum(d, 'reviewedAt')
+        && optNum(d, 'updatedAt');
+    }
+  }
+}

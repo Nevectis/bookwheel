@@ -1,0 +1,28 @@
+# Checks every pull request: unit tests, security-rule tests and end-to-end
+# tests (demo mode + two users against the Firebase emulators).
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:rules
+      - run: npm run test:e2e
+      - run: npm run test:e2e:emulator

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Bookwheel</title>
+    <meta name="description" content="Bookwheel – euer Buchclub: Regal füllen, am Rad drehen, gemeinsam lesen und bewerten." />
+    <meta name="theme-color" content="#f6f0e5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#15100e" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..800,0..100,0..1;1,9..144,400..800,0..100,0..1&family=Karla:ital,wght@0,400..800;1,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    />
+    <script>
+      // Apply the saved theme before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem('bookwheel:theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        var l = localStorage.getItem('bookwheel:lang') || ((navigator.language || '').toLowerCase().indexOf('de') === 0 ? 'de' : 'en');
+        document.documentElement.lang = l;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <noscript>Bookwheel needs JavaScript. / Bookwheel braucht JavaScript.</noscript>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
