@@ -119,6 +119,11 @@
     border-bottom-color: var(--gold);
     background: transparent;
   }
+  .search input:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
   /* the bookcase: a warm back panel, walnut shelves */
   .case {
     position: relative;
@@ -210,6 +215,13 @@
     opacity: 1;
     transform: translateY(-10px);
   }
+  /* touch screens can't hover: show that a book can be opened to edit */
+  @media (hover: none) {
+    .edit-badge {
+      opacity: 0.92;
+      transform: translateY(-10px);
+    }
+  }
   /* walnut shelf board with a lit front edge */
   .plank {
     display: block;
@@ -247,7 +259,7 @@
     align-items: center;
     gap: 6px;
     margin-top: 8px;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;

@@ -44,7 +44,7 @@
   }
 </script>
 
-<Modal {onclose} labelledby="result-title" size="lg" variant="bare">
+<Modal {onclose} labelledby="result-title" size="lg" variant="bare" returnFocus="[data-testid='spin']">
   {#snippet backdrop()}
     <canvas class="confetti" bind:this={canvas} aria-hidden="true"></canvas>
   {/snippet}
@@ -99,8 +99,7 @@
     inset: 0;
     width: 100vw;
     height: 100vh;
-    pointer-events: none;
-    z-index: 101;
+    pointer-events: none; /* falls behind the dialog, never over what you're reading or typing */
   }
   .plate {
     display: grid;
@@ -183,7 +182,7 @@
     color: var(--gold-ink);
   }
   .club {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.24em;
     text-transform: uppercase;
@@ -206,7 +205,7 @@
     align-items: center;
     gap: 8px;
     margin-top: 14px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -254,6 +253,21 @@
     font-weight: 600;
     font-size: 21px;
     letter-spacing: 0.01em;
+  }
+  /* landscape phones: keep both columns, but compact enough to fit (the panel scrolls if not) */
+  @media (max-height: 560px) and (min-width: 641px) {
+    .plate {
+      min-height: 0;
+    }
+    .endpaper {
+      padding: 18px;
+    }
+    .flip {
+      width: min(118px, 60%);
+    }
+    .leaf {
+      padding: 22px 28px 20px;
+    }
   }
   @media (max-width: 640px) {
     .plate {

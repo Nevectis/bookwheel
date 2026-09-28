@@ -40,7 +40,11 @@
       {id}
       class="pop {align}"
       transition:scale={{ start: 0.92, duration: 160 }}
-      onclick={(e) => e.target.closest('[data-close]') && close()}
+      onclick={(e) => {
+        if (!e.target.closest('[data-close]')) return;
+        close();
+        button?.focus(); // so a dialog opened from here hands focus back to the trigger
+      }}
     >
       {@render children(close)}
     </div>
@@ -108,7 +112,7 @@
   }
   .pop :global(.mlabel) {
     padding: 8px 11px 4px;
-    font-size: 11px;
+    font-size: 12px;
     font-family: var(--font-body);
     font-weight: 500;
     text-transform: uppercase;

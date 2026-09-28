@@ -46,6 +46,16 @@
   let ribbonEl = $state();
   let tweenRaf = 0;
   let spinRaf = 0;
+  // Rendered width: on a phone the disc is ~300px, so slices drop the (then
+  // microscopic) author line and give the title all the room.
+  let boxWidth = $state(540);
+  const compact = $derived(boxWidth < 470);
+  // The readable caption under the wheel: the book under the ribbon while it
+  // spins and once it lands, or a slice someone tapped to read it in full.
+  let underPointer = $state(null);
+  let peekId = $state(null);
+  const captionId = $derived(spinning || winnerId ? (winnerId ?? underPointer) : peekId);
+  const caption = $derived(captionId ? (entries.find((e) => e.id === captionId)?.item ?? null) : null);
 
   $effect(() => {
     const list = items;
@@ -111,8 +121,10 @@
     return entries
       .map((e, i) => {
         const a = angles[i];
-        const fs = labelFontSize(a.span, (R + HUB) / 1.7, { min: 8, max: 17.5 });
-        const twoLines = ((a.span * Math.PI) / 180) * (R * 0.66) >= fs * 2.2;
+        const fs = compact
+          ? labelFontSize(a.span, (R + HUB) / 1.7, { min: 9, max: 21, per: 2.2 })
+          : labelFontSize(a.span, (R + HUB) / 1.7, { min: 8, max: 17.5 });
+        const twoLines = !compact && ((a.span * Math.PI) / 180) * (R * 0.66) >= fs * 2.3;
         return {
           id: e.id,
           ...a,
@@ -121,7 +133,7 @@
           twoLines,
           full: `${e.item?.title ?? ''} — ${e.item?.author ?? ''}`,
           title: fitText(e.item?.title, fs, TEXT_LEN, 0.43),
-          author: fitText((e.item?.author ?? '').toUpperCase(), fs * 0.52, TEXT_LEN, 0.74),
+          author: fitText((e.item?.author ?? '').toUpperCase(), fs * 0.58, TEXT_LEN, 0.74),
         };
       })
       .filter((s) => s.span > 0.05);
@@ -163,7 +175,7 @@
   const ring = $derived.by(() => {
     const word = String(ringText).toUpperCase().slice(0, 40);
     const circumference = 2 * Math.PI * RING_R;
-    const unit = (word.length + 5) * 7.2;
+    const unit = (word.length + 5) * 8.9;
     const reps = Math.max(1, Math.round(circumference / unit));
     return Array(reps).fill(word).join('  ·  ') + '  ·  ';
   });
@@ -185,6 +197,7 @@
     const angles = segmentAngles(entries.map((e) => e.weight));
     const idx = entries.findIndex((e) => e.id === targetId);
     if (idx < 0) return Promise.resolve(null);
+    peekId = null;
 
     const reduced = prefersReducedMotion();
     const from = rotation;
@@ -216,6 +229,7 @@
         const i = indexAtPointer(r, angles);
         if (i !== last) {
           last = i;
+          underPointer = entries[i]?.id ?? null;
           const speed = Math.min(1, Math.abs(r - prevR) / Math.max(1, now - prevT) / 1.2);
           try {
             flick(speed);
@@ -229,6 +243,7 @@
         if (el < windup + duration) spinRaf = requestAnimationFrame(step);
         else {
           rotation = mod360(to);
+          underPointer = entries[idx].id;
           resolve(entries[idx].item);
         }
       };
@@ -242,7 +257,7 @@
   });
 </script>
 
-<div class="volvelle" class:spinning class:has-winner={!!winnerId} class:empty={!slices.length}>
+<div class="volvelle" class:spinning class:has-winner={!!winnerId} class:empty={!slices.length} bind:clientWidth={boxWidth}>
   {#key pop}
     <div class="disc">
       <svg viewBox="-262 -262 524 524" role="img" aria-label={label || hubLabel}>
@@ -282,7 +297,9 @@
           <g class="rotor" transform="rotate({rotation})">
             <circle r={R + 3} class="disc-edge" />
             {#each slices as s (s.id)}
-              <g class="slice" class:win={s.id === winnerId}>
+              <!-- Tap a slice to read it in full below (touch has no hover tooltip); the wheel's label lists every book for screen readers. -->
+              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+              <g class="slice" class:win={s.id === winnerId} onclick={() => !spinning && !winnerId && (peekId = peekId === s.id ? null : s.id)}>
                 <title>{s.full}</title>
                 <path d={arcPath(s.start, s.end, R, HUB)} fill={s.color} />
                 {#if s.span > 2.2}
@@ -295,7 +312,7 @@
                       font-size={s.fs}>{s.title}</text
                     >
                     {#if s.twoLines}
-                      <text class="t-author" x={TEXT_OUT} y={s.fs * 0.86} text-anchor="end" font-size={s.fs * 0.5}>{s.author}</text>
+                      <text class="t-author" x={TEXT_OUT} y={s.fs * 0.9} text-anchor="end" font-size={s.fs * 0.56}>{s.author}</text>
                     {/if}
                   </g>
                 {/if}
@@ -328,7 +345,8 @@
         <circle r="258" fill="url(#vv-lamp)" pointer-events="none" />
       </svg>
 
-      <button class="rivet" type="button" onclick={onhub} disabled={disabled || spinning} aria-label={hubLabel}>
+      <!-- A second, pointer-only way to spin; keyboard and screen readers use the button below the wheel. -->
+      <button class="rivet" type="button" onclick={onhub} disabled={disabled || spinning} tabindex="-1" aria-hidden="true">
         <span class="rivet-face" aria-hidden="true">❦</span>
       </button>
     </div>
@@ -357,7 +375,47 @@
   </div>
 </div>
 
+<!-- aria-hidden: the card announces the result itself, and the wheel's label lists every book -->
+<p class="caption" aria-hidden="true">
+  {#if caption}
+    <span class="c-title">{caption.title}</span>
+    <span class="c-author">{caption.author}</span>
+  {/if}
+</p>
+
 <style>
+  .caption {
+    min-height: 50px;
+    margin: 14px auto 0;
+    max-width: 32ch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .c-title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 21px;
+    line-height: 1.15;
+    color: var(--ink);
+  }
+  .c-author {
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .slice {
+    cursor: pointer;
+  }
+  .spinning .slice,
+  .has-winner .slice {
+    cursor: default;
+  }
   .volvelle {
     --dial: #f1e8d5;
     --dial-ink: #4a3d31;
@@ -366,6 +424,12 @@
     width: min(100%, 540px);
     margin: 0 auto;
     aspect-ratio: 1;
+  }
+  /* landscape phones: the whole wheel, pointer included, fits on screen */
+  @media (orientation: landscape) and (max-height: 520px) {
+    .volvelle {
+      width: min(100%, 540px, calc(100svh - 110px));
+    }
   }
   :global(:root[data-theme='dark']) .volvelle {
     --dial: #d8cbb0;
@@ -496,7 +560,7 @@
     fill: var(--dial-ink);
     font-family: var(--font-body);
     font-weight: 500;
-    font-size: 7.6px;
+    font-size: 9.4px;
     letter-spacing: 0.1em;
     white-space: pre;
   }

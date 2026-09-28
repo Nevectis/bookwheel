@@ -95,9 +95,9 @@ export function mergeLayout(prev, nextItems) {
 }
 
 /** Largest font size (px) that fits a label inside a slice. */
-export function labelFontSize(spanDeg, radius, { min = 7, max = 17 } = {}) {
+export function labelFontSize(spanDeg, radius, { min = 7, max = 17, per = 2.5 } = {}) {
   const arc = (spanDeg * Math.PI) / 180 * radius * 0.62;
-  return Math.max(min, Math.min(max, arc / 2.5));
+  return Math.max(min, Math.min(max, arc / per));
 }
 
 /** Trim `text` so roughly `maxWidth` px of it fits at `fontSize`. */

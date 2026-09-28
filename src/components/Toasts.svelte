@@ -74,7 +74,13 @@
     color: #f0a293;
     border-color: rgba(240, 162, 147, 0.55);
   }
+  /* long titles in messages: at most three lines */
   .msg {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     flex: 1;
   }
   button {

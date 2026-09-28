@@ -94,7 +94,7 @@
           <span class="avg-num">{formatAverage(s.average)}</span>
           <div class="avg-side">
             <Stars value={s.average} size={20} animate label={t('chron.avg', { value: formatAverage(s.average) })} />
-            <span class="avg-of">{t('chron.avg', { value: formatAverage(s.average) })} · {t('chron.votes', { n: s.ratedCount, m: s.expectedCount })}</span>
+            <span class="avg-of">{t('chron.votes', { n: s.ratedCount, m: s.expectedCount })}</span>
           </div>
         </div>
       {:else}
@@ -121,7 +121,7 @@
 
     <div class="c-actions">
       {#if mine?.rating}
-        <span class="my-rating"><Stars value={mine.rating} size={15} label={t('review.star', { n: mine.rating })} /></span>
+        <span class="my-rating"><span class="my-label">{t('current.yourRating')}</span><Stars value={mine.rating} size={15} label={t('review.star', { n: mine.rating })} /></span>
         <button class="btn btn-ghost btn-sm" type="button" onclick={() => (ui.review = { bookId: book.id })}>
           <Icon name="edit" size={14} stroke={1.6} />{t('chron.editRating')}
         </button>
@@ -142,7 +142,7 @@
         {#each reviews as r, i (r.uid)}
           <li in:fly={{ y: 10, delay: 60 * i }}>
             <p class="r-text" class:muted={!r.review}>{r.review || t('chron.noText')}</p>
-            <p class="r-head"><Avatar member={r.member} size={22} /><strong>{r.member.name}</strong> <Stars value={r.rating} size={12} /></p>
+            <p class="r-head"><Avatar member={r.member} size={22} /><strong>{r.member.name}</strong> <Stars value={r.rating} size={14} /></p>
           </li>
         {/each}
       </ul>
@@ -154,7 +154,7 @@
   .entry {
     position: relative;
     display: grid;
-    grid-template-columns: 100px 1fr;
+    grid-template-columns: 100px minmax(0, 1fr);
     gap: 22px;
     padding: 22px 22px 20px;
     border-radius: 10px;
@@ -203,7 +203,7 @@
   }
   .now-badge {
     display: inline-block;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.2em;
@@ -221,7 +221,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -230,6 +230,7 @@
   .picked {
     font-size: 13.5px;
     color: var(--ink-soft);
+    overflow-wrap: anywhere;
   }
   .month-edit {
     display: flex;
@@ -263,7 +264,7 @@
     gap: 6px;
   }
   .avg-of {
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -289,10 +290,14 @@
     margin: 6px 0 4px;
     flex-wrap: wrap;
   }
+  /* still to rate: greyed, with a dashed ring, but still legible */
   .voter {
     position: relative;
-    opacity: 0.4;
-    filter: grayscale(0.8);
+    border-radius: 50%;
+    opacity: 0.7;
+    filter: grayscale(0.7);
+    outline: 1.5px dashed var(--ink-faint);
+    outline-offset: 1px;
     transition:
       opacity 0.3s,
       filter 0.3s;
@@ -300,6 +305,7 @@
   .voter.done {
     opacity: 1;
     filter: none;
+    outline: none;
   }
   .tick {
     position: absolute;
@@ -332,6 +338,15 @@
   }
   .my-rating {
     display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .my-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
   }
   .reviews {
     list-style: none;
@@ -384,7 +399,7 @@
   }
   @media (max-width: 560px) {
     .entry {
-      grid-template-columns: 66px 1fr;
+      grid-template-columns: 66px minmax(0, 1fr);
       gap: 6px 14px;
       padding: 16px;
     }

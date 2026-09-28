@@ -15,6 +15,8 @@
     variant = 'default',
     children,
     backdrop = null,
+    /** Where focus goes on close if whatever had it before is gone (a selector). */
+    returnFocus = null,
   } = $props();
 
   let panel = $state();
@@ -25,7 +27,11 @@
     const target = panel?.querySelector('[data-autofocus]') ?? panel?.querySelector('input, textarea, select, button:not(.modal-x)') ?? panel;
     requestAnimationFrame(() => target?.focus({ preventScroll: true }));
     return () => {
-      if (previouslyFocused && typeof previouslyFocused.focus === 'function') previouslyFocused.focus({ preventScroll: true });
+      const back =
+        previouslyFocused?.isConnected && previouslyFocused !== document.body
+          ? previouslyFocused
+          : returnFocus && document.querySelector(returnFocus);
+      back?.focus?.({ preventScroll: true });
     };
   });
 
@@ -94,7 +100,6 @@
     inset: 0;
     background: rgba(26, 18, 11, 0.5);
     backdrop-filter: blur(5px) sepia(0.2);
-    -webkit-backdrop-filter: blur(5px) sepia(0.2);
   }
   /* a sheet of paper with a printed inner rule */
   .modal-panel {
@@ -109,16 +114,13 @@
     border: 1px solid var(--line-strong);
     border-radius: 12px;
     box-shadow: var(--shadow-lg);
+    --pad-b: clamp(26px, 4vw, 38px); /* sticky footers inside reach the edge with it */
     padding: clamp(26px, 4vw, 38px);
-    outline: none;
-  }
-  .modal-panel::before {
-    content: '';
-    position: absolute;
-    inset: 8px;
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    pointer-events: none;
+    padding-bottom: var(--pad-b);
+    /* the printed inner rule: an outline stays put while the content scrolls
+       (a positioned ::before would scroll with it and cut across the text) */
+    outline: 1px solid var(--line);
+    outline-offset: -9px;
   }
   .modal-panel.sm {
     width: min(430px, 100%);
@@ -128,16 +130,28 @@
   }
   .modal-panel.bare {
     padding: 0;
-    overflow: hidden;
-  }
-  .modal-panel.bare::before {
-    display: none;
+    overflow: hidden auto;
+    outline: none;
   }
   .modal-x {
     position: absolute;
     top: 16px;
     right: 16px;
     z-index: 3;
+  }
+  /* over artwork (the marbled endpaper) the close button needs its own paper */
+  .bare .modal-x {
+    background: color-mix(in srgb, var(--card) 92%, transparent);
+    border: 1px solid var(--line-strong);
+    box-shadow: 0 2px 8px rgba(30, 18, 8, 0.18);
+  }
+  @media (pointer: coarse) {
+    .modal-x {
+      width: 44px;
+      height: 44px;
+      top: 12px;
+      right: 12px;
+    }
   }
   @media (max-width: 640px) {
     .modal-root {
@@ -150,7 +164,7 @@
       width: 100%;
       border-radius: 16px 16px 0 0;
       max-height: 94dvh;
-      padding-bottom: calc(26px + env(safe-area-inset-bottom, 0px));
+      --pad-b: calc(26px + env(safe-area-inset-bottom, 0px));
     }
     .modal-panel.bare {
       padding-bottom: 0;

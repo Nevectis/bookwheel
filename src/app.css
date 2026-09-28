@@ -137,9 +137,26 @@
 *::after {
   box-sizing: border-box;
 }
+/* Titles, authors and names are typed in by people: one very long word
+   must wrap instead of widening the whole page. */
+h1,
+h2,
+h3,
+h4,
+p,
+dd,
+blockquote {
+  overflow-wrap: anywhere;
+}
 html {
   scroll-padding-top: 92px;
   -webkit-text-size-adjust: 100%;
+}
+/* phones: keep focused things clear of the floating bottom dock */
+@media (max-width: 760px) {
+  html {
+    scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  }
 }
 body {
   margin: 0;
@@ -224,7 +241,7 @@ button {
 
 .eyebrow {
   font-family: var(--font-body);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -394,6 +411,16 @@ button {
   width: 32px;
   min-height: 32px;
 }
+/* fingers need bigger targets than a mouse pointer */
+@media (pointer: coarse) {
+  .btn-sm {
+    min-height: 42px;
+  }
+  .btn-icon.btn-sm {
+    width: 42px;
+    min-height: 42px;
+  }
+}
 .btn svg {
   flex: none;
 }
@@ -407,7 +434,7 @@ button {
 }
 .field > span,
 .label {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;

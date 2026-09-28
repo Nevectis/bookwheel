@@ -99,8 +99,7 @@
     inset: 0;
     width: 100vw;
     height: 100vh;
-    pointer-events: none;
-    z-index: 101;
+    pointer-events: none; /* falls behind the dialog, never over what you're reading or typing */
   }
   .review {
     display: flex;
@@ -121,7 +120,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;

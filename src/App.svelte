@@ -58,15 +58,16 @@
 {:else if club.phase === 'ready'}
   <div class="app" inert={dialogOpen} in:fade={{ duration: 400 }}>
     <span id="top"></span>
+    <a class="skip" href="#main">{t('common.skip')}</a>
     {#if club.mode === 'demo'}
-      <div class="demo-banner">
+      <aside class="demo-banner">
         <span>{t('demo.banner')}</span>
         <a href="https://github.com/nevectis/bookwheel#readme" target="_blank" rel="noopener">{t('demo.setup')} →</a>
-      </div>
+      </aside>
     {/if}
     <Header />
 
-    <main class="container">
+    <main class="container" id="main" tabindex="-1">
       <section class="hero" use:reveal>
         <p class="eyebrow">{t(greetKey, { name: club.me?.name ?? '' })}</p>
         <h1 class="hero-title">
@@ -162,6 +163,29 @@
     position: relative;
     z-index: 2;
   }
+  .skip {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 200;
+    padding: 10px 16px;
+    border-radius: 6px;
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .skip:not(:focus) {
+    clip-path: inset(50%);
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  main:focus {
+    outline: none;
+  }
   .demo-banner {
     position: relative;
     z-index: 41;
@@ -171,7 +195,7 @@
     gap: 14px;
     flex-wrap: wrap;
     padding: 7px 16px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -342,7 +366,7 @@
     text-transform: uppercase;
     color: var(--ink-soft);
     text-decoration: none;
-    padding: 6px 10px;
+    padding: 11px 14px;
     border-radius: 6px;
   }
   .up:hover {

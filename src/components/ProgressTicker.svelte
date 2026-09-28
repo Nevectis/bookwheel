@@ -13,7 +13,7 @@
   import { percent, readerGoalState } from '../lib/reading.js';
   import { safeColor } from '../lib/club.js';
   import { parseDay } from '../lib/dates.js';
-  import { clock } from '../lib/ui.svelte.js';
+  import { clock, prefersReducedMotion } from '../lib/ui.svelte.js';
 
   const book = $derived(club.current);
   const rows = $derived.by(() => {
@@ -51,6 +51,36 @@
   });
   const nudge = (dir) => strip?.scrollBy({ left: dir * strip.clientWidth * 0.8, behavior: 'smooth' });
 
+  // After you update your page your card re-sorts; without this the strip
+  // re-snaps to whichever card it showed before and yours slides out of view.
+  const mine = $derived.by(() => {
+    const e = book ? club.entry(book.id) : null;
+    return `${book?.id}|${e?.page ?? 0}|${!!e?.finished}`;
+  });
+  let lastMine;
+  let mineTimer;
+  $effect(() => () => clearTimeout(mineTimer));
+  $effect(() => {
+    const key = mine;
+    if (lastMine !== undefined && key !== lastMine) {
+      clearTimeout(mineTimer);
+      // Let the reorder settle, then bring my card in (snapping paused, or
+      // the strip snaps straight back to the card it showed before).
+      mineTimer = setTimeout(() => {
+        const card = strip?.querySelector('.me'); // offsetLeft ignores the reorder animation
+        if (!card) return;
+        const pad = parseFloat(getComputedStyle(strip).paddingLeft) || 0;
+        const smooth = !prefersReducedMotion();
+        strip.style.scrollSnapType = 'none';
+        const restore = () => (strip.style.scrollSnapType = '');
+        strip.addEventListener('scrollend', restore, { once: true });
+        setTimeout(restore, 900);
+        strip.scrollTo({ left: Math.max(0, card.offsetLeft - pad), behavior: smooth ? 'smooth' : 'auto' });
+      }, 120);
+    }
+    lastMine = key;
+  });
+
   function status(r) {
     if (r.entry?.finished) return { cls: 'done', text: t('ticker.finished') };
     if (!r.page) return { cls: 'idle', text: t('ticker.notStarted') };
@@ -78,7 +108,9 @@
   {#if !book}
     <p class="empty">{t('ticker.empty')}</p>
   {:else}
-    <ul class="strip" bind:this={strip} onscroll={measure} data-testid="ticker">
+    <!-- focusable so keyboard users can scroll the strip with the arrow keys -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <ul class="strip" bind:this={strip} onscroll={measure} data-testid="ticker" tabindex="0" aria-label={t('ticker.title')}>
       {#each rows as r, i (r.id)}
         {@const s = status(r)}
         <li
@@ -91,8 +123,8 @@
         >
           <div class="slip-head">
             <Avatar member={r.member} size={34} />
-            <p class="name">
-              {r.member.name}
+            <p class="name" title={r.member.name}>
+              <span class="nm">{r.member.name}</span>
               {#if r.me}<span class="you">{t('common.you')}</span>{/if}
             </p>
           </div>
@@ -129,6 +161,12 @@
   }
   .t-head .eyebrow {
     color: var(--oxblood);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .t-head > :first-child {
+    min-width: 0;
   }
   h2 {
     font-size: clamp(30px, 3.6vw, 40px);
@@ -150,6 +188,7 @@
     list-style: none;
     margin: 0 calc(-1 * clamp(16px, 4vw, 36px));
     padding: 22px clamp(16px, 4vw, 36px) 26px;
+    position: relative; /* the cards' offsetParent */
     display: flex;
     gap: 18px;
     overflow-x: auto;
@@ -246,14 +285,24 @@
     font-family: var(--font-display);
     font-weight: 600;
     font-size: 22px;
-    line-height: 1;
+    line-height: 1.1;
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+  }
+  .nm {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .you {
+    flex: none;
   }
   .you {
     font-family: var(--font-body);
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -315,7 +364,7 @@
     border: 1.5px solid currentColor;
     border-radius: 3px;
     font-family: var(--font-body);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.1em;
     line-height: 1.25;

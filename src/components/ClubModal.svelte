@@ -7,7 +7,7 @@
   import { club, landed } from '../lib/store.svelte.js';
   import { t, locale } from '../lib/i18n.svelte.js';
   import { longDate } from '../lib/dates.js';
-  import { confirmDialog, toast } from '../lib/ui.svelte.js';
+  import { confirmDialog } from '../lib/ui.svelte.js';
 
   let { onclose } = $props();
   let copied = $state('');
@@ -29,7 +29,8 @@
       copied = what;
       setTimeout(() => (copied = ''), 1800);
     } catch {
-      toast(text);
+      // No clipboard access (older browser, permissions): offer it pre-selected to copy by hand.
+      window.prompt(t('clubm.copyManually'), text);
     }
   }
 
@@ -243,7 +244,7 @@
   }
   .you {
     font-family: var(--font-body);
-    font-size: 10.5px !important;
+    font-size: 11.5px !important;
     font-weight: 500 !important;
     letter-spacing: 0.16em;
     text-transform: uppercase;

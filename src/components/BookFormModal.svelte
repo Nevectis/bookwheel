@@ -184,7 +184,7 @@
           {/each}
         </ul>
       {:else if searched && !searching}
-        <p class="hint" in:fade>{t('add.noResults')}</p>
+        <p class="hint" in:fade>{t(navigator.onLine === false ? 'add.offline' : 'add.noResults')}</p>
       {/if}
     </div>
   {/if}
@@ -448,11 +448,19 @@
   .gopt.on .dot {
     background: #fbf5ea !important;
   }
+  /* stays in reach while the (long) form scrolls */
   .actions {
+    position: sticky;
+    bottom: calc(-1 * var(--pad-b, 0px)); /* down to the panel's edge, over its padding */
+    z-index: 2;
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    margin-bottom: calc(-1 * var(--pad-b, 0px));
+    padding: 12px 0 calc(12px + var(--pad-b, 0px));
+    background: var(--card);
+    box-shadow: 0 -12px 14px -14px rgba(30, 18, 8, 0.35);
   }
   .spacer {
     flex: 1;

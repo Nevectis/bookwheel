@@ -195,7 +195,7 @@
     align-items: center;
     gap: 4px;
     white-space: nowrap;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.06em;
     text-transform: uppercase;

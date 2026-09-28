@@ -9,7 +9,7 @@
   import { t, locale } from '../lib/i18n.svelte.js';
   import { genreById, genreSwatch } from '../lib/genres.js';
   import { daysUntil, isoDay, monthLabel, parseDay, shortDay } from '../lib/dates.js';
-  import { clampPage, nextGoal, percent } from '../lib/reading.js';
+  import { clampPage, nextGoal, percent, sortGoals } from '../lib/reading.js';
   import { scrollToSection, tilt } from '../lib/actions.js';
   import { clock, toast, ui } from '../lib/ui.svelte.js';
 
@@ -19,7 +19,11 @@
   const genre = $derived(genreById(book?.genre));
 
   let page = $state(0);
-  let savedFlash = $state(0);
+  // A small tick beside the page number for a moment after saving; it takes
+  // no room in the row, so nothing reflows.
+  let showSaved = $state(false);
+  let savedTimer;
+  $effect(() => () => clearTimeout(savedTimer));
   let pagesInput = $state('');
   // Follow my saved page (a primitive, so other members' updates don't reset typing).
   const savedPage = $derived(mine?.page ?? 0);
@@ -35,10 +39,22 @@
     if (p === (mine?.page ?? 0)) return;
     try {
       await club.saveProgress(book, p);
-      savedFlash++;
+      showSaved = true;
+      clearTimeout(savedTimer);
+      savedTimer = setTimeout(() => (showSaved = false), 2200);
     } catch {
       /* toast shown by store */
     }
+  }
+
+  // A thumb swipe that starts on the slider to scroll the page must not move
+  // (and save) my bookmark: drop any change made while the page scrolled.
+  let scrollAtPress = null;
+  function slid() {
+    const scrolled = scrollAtPress != null && Math.abs(window.scrollY - scrollAtPress) > 6;
+    scrollAtPress = null;
+    if (scrolled) page = savedPage;
+    else save();
   }
 
   async function finish() {
@@ -151,14 +167,17 @@
                   min="0"
                   max={book.pageCount}
                   bind:value={page}
-                  onchange={save}
+                  onpointerdown={() => (scrollAtPress = window.scrollY)}
+                  onpointercancel={() => (page = savedPage)}
+                  onchange={slid}
                   aria-label={t('current.myProgress')}
                   data-testid="page-slider"
                 />
-                {#each book.goals ?? [] as g (g.id)}
+                {#each sortGoals(book.goals) as g (g.id)}
                   <span
                     class="flag"
                     class:hit={page >= g.page}
+                    class:end={g.page / book.pageCount > 0.94}
                     style:left="{Math.min(100, (g.page / book.pageCount) * 100)}%"
                     title={t('goals.item', { date: shortDay(g.date, locale()), page: g.page })}
                   ><span>{g.page}</span></span>
@@ -179,12 +198,14 @@
                   data-testid="page-input"
                 />
                 {#if book.pageCount}<span class="of">{t('current.ofPages', { n: book.pageCount })}</span>{/if}
+                <span class="saved-slot" role="status">
+                  {#if showSaved}
+                    <span class="saved" transition:fly={{ y: 6, duration: 300 }}>
+                      <Icon name="check" size={14} stroke={2.4} /><span class="sr-only">{t('current.savedShort')}</span>
+                    </span>
+                  {/if}
+                </span>
               </label>
-              {#key savedFlash}
-                {#if savedFlash}
-                  <span class="saved" in:fly={{ y: 6, duration: 300 }}><Icon name="check" size={14} stroke={2.4} /></span>
-                {/if}
-              {/key}
               <button class="btn btn-primary" type="button" onclick={finish} data-testid="mark-read">
                 <Icon name="check" size={17} stroke={1.8} />
                 {t('current.markRead')}
@@ -297,7 +318,7 @@
     border-bottom: 1px solid var(--line);
   }
   dt {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -332,7 +353,7 @@
     border: 1px solid color-mix(in srgb, var(--oxblood) 30%, transparent);
   }
   .ng-label {
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -361,7 +382,7 @@
     margin-bottom: 4px;
   }
   .label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -387,6 +408,7 @@
   .range input {
     -webkit-appearance: none;
     appearance: none;
+    touch-action: pan-y; /* vertical swipes scroll the page */
     width: 100%;
     height: 26px;
     background: transparent;
@@ -421,6 +443,23 @@
   .range input:active::-webkit-slider-thumb {
     transform: scale(1.15);
   }
+  /* keyboard focus: a clear ring on the thumb instead of a box round the track */
+  .range input:focus-visible {
+    outline: none;
+  }
+  .range input:focus-visible::-webkit-slider-thumb {
+    box-shadow:
+      inset 0 0 0 3px var(--card),
+      inset 0 0 0 8px var(--gold-2),
+      0 0 0 3px var(--card),
+      0 0 0 5.5px var(--oxblood);
+  }
+  .range input:focus-visible::-moz-range-thumb {
+    box-shadow:
+      0 0 0 1.5px var(--accent),
+      0 0 0 4px var(--card),
+      0 0 0 6.5px var(--oxblood);
+  }
   .range input::-moz-range-thumb {
     width: 18px;
     height: 18px;
@@ -454,6 +493,12 @@
   .flag.hit {
     background: var(--green);
   }
+  /* a goal at (or near) the last page: label ends at the flag, inside the track */
+  .flag.end span {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
   .flag.hit span {
     color: var(--green);
   }
@@ -464,6 +509,7 @@
     flex-wrap: wrap;
   }
   .page-input {
+    position: relative;
     display: flex;
     align-items: baseline;
     gap: 10px;
@@ -489,8 +535,19 @@
     box-shadow: none;
     border-bottom-color: var(--gold);
   }
+  .page-input input:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
   .of {
     font-style: italic;
+  }
+  .saved-slot {
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    translate: 0 -50%;
   }
   .saved {
     display: grid;
@@ -619,6 +676,15 @@
     }
     .ng-due {
       grid-column: 2;
+    }
+  }
+  /* very narrow (a small phone at 200% zoom): cover above the details */
+  @media (max-width: 340px) {
+    .top {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .cover-col {
+      width: 112px;
     }
   }
 </style>

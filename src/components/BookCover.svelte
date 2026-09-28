@@ -111,7 +111,7 @@
     line-clamp: 5;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     hyphens: auto;
   }
   .rule {

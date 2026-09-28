@@ -229,8 +229,8 @@
   }
   .n {
     font-family: var(--font-type);
-    font-size: 11px;
-    opacity: 0.7;
+    font-size: 12.5px;
+    font-weight: 700;
   }
   .stage {
     position: relative;
@@ -252,6 +252,7 @@
     text-align: center;
   }
   .spin-btn {
+    min-width: min(100%, 290px); /* same width while it says "spinning …" */
     min-height: 54px;
     padding: 10px 34px 10px 28px;
     gap: 12px;
@@ -284,6 +285,10 @@
     }
   }
   @media (max-width: 640px) {
+    /* give the wheel nearly the full card width on phones */
+    .stage {
+      margin-inline: -14px;
+    }
     .filters {
       flex-wrap: nowrap;
       overflow-x: auto;
@@ -297,6 +302,7 @@
     }
     .tag {
       flex: none;
+      min-height: 40px;
     }
   }
 </style>

@@ -139,7 +139,7 @@
     padding: 4px 10px;
     border-radius: 5px;
     font-weight: 500;
-    font-size: 11.5px;
+    font-size: 12px;
     letter-spacing: 0.14em;
     cursor: pointer;
     color: var(--ink-soft);

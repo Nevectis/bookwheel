@@ -202,3 +202,41 @@ test('fits a phone screen without sideways scrolling', async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
   await expect(page.locator('.dock')).toBeVisible();
 });
+
+test('a very long unbroken title or name never widens a phone screen', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await enterDemo(page);
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('bookwheel:demo-v2'));
+    const picked = Object.values(s.books).filter((b) => b.status === 'picked');
+    for (const b of picked) b.title = 'Donaudampfschifffahrtsgesellschaftskapitänswitwenrentenversicherung';
+    s.members.anna.name = 'Annamariaelisabethkatharinaluisesophie';
+    localStorage.setItem('bookwheel:demo-v2', JSON.stringify(s));
+  });
+  await page.reload();
+  await expect(page.locator('#chronicle')).toBeVisible();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('a scroll swipe that starts on the bookmark slider does not move my page', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, locale: 'de-DE' });
+  const page = await ctx.newPage();
+  await stubCatalogue(page);
+  await enterDemo(page);
+  const slider = page.getByTestId('page-slider');
+  await slider.scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, -200));
+  const box = await slider.boundingBox();
+  const cdp = await ctx.newCDPSession(page);
+  const touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] });
+  const x = box.x + box.width * 0.6;
+  const y = box.y + box.height / 2;
+  await touch('touchStart', x, y);
+  for (let i = 1; i <= 12; i++) await touch('touchMove', x + i * 0.25, y - i * 20);
+  await touch('touchEnd');
+  await page.waitForTimeout(600);
+  await expect(slider).toHaveValue('0');
+  await expect(page.getByTestId('page-input')).toHaveValue('0');
+  await ctx.close();
+});

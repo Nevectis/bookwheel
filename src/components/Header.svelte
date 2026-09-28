@@ -18,20 +18,41 @@
   let active = $state('wheel');
   let scrolled = $state(false);
 
+  // The section being read: the last one whose top has passed the upper part
+  // of the screen. Side-by-side sections (wheel and current book on wide
+  // screens) share a top, and then the first of them counts.
+  let lockUntil = 0;
+  function pickActive() {
+    if (Date.now() < lockUntil) return;
+    const line = window.innerHeight * 0.45;
+    let id = links[0].id;
+    let top = -Infinity;
+    for (const l of links) {
+      const y = document.getElementById(l.id)?.getBoundingClientRect().top;
+      if (y != null && y <= line && y > top + 4) {
+        id = l.id;
+        top = y;
+      }
+    }
+    active = id;
+  }
+  function go(e, id) {
+    active = id; // the link you clicked, even if it shares a row with another
+    lockUntil = Date.now() + 1000;
+    scrollToSection(e, id);
+  }
+
   onMount(() => {
-    const onScroll = () => (scrolled = window.scrollY > 8);
+    let raf = 0;
+    const onScroll = () => {
+      scrolled = window.scrollY > 8;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(pickActive);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) if (e.isIntersecting) active = e.target.id;
-      },
-      { rootMargin: '-45% 0px -50% 0px' },
-    );
-    const t = setTimeout(() => links.forEach((l) => document.getElementById(l.id) && io.observe(document.getElementById(l.id))), 300);
     return () => {
-      clearTimeout(t);
-      io.disconnect();
+      cancelAnimationFrame(raf);
       window.removeEventListener('scroll', onScroll);
     };
   });
@@ -49,7 +70,7 @@
 
     <nav class="links" aria-label={t('nav.sections')}>
       {#each links as l}
-        <a href="#{l.id}" class:active={active === l.id} aria-current={active === l.id ? 'true' : undefined} onclick={(e) => scrollToSection(e, l.id)}>
+        <a href="#{l.id}" class:active={active === l.id} aria-current={active === l.id ? 'true' : undefined} onclick={(e) => go(e, l.id)}>
           {t(l.key)}
         </a>
       {/each}
@@ -97,7 +118,7 @@
 
 <nav class="dock" aria-label={t('nav.sections')}>
   {#each links as l}
-    <a href="#{l.id}" class:active={active === l.id} onclick={(e) => scrollToSection(e, l.id)}>
+    <a href="#{l.id}" class:active={active === l.id} aria-current={active === l.id ? 'true' : undefined} onclick={(e) => go(e, l.id)}>
       <Icon name={l.icon} size={19} stroke={1.6} />
       <span>{t(l.key)}</span>
     </a>
@@ -118,7 +139,6 @@
   .top.scrolled {
     background: color-mix(in srgb, var(--paper) 95%, transparent);
     backdrop-filter: blur(14px) saturate(1.15);
-    -webkit-backdrop-filter: blur(14px) saturate(1.15);
     border-bottom-color: var(--line);
   }
   .bar {
@@ -150,7 +170,7 @@
   }
   .club {
     margin-top: 3px;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -267,11 +287,11 @@
       transform: translateX(-50%);
       display: flex;
       gap: 0;
+      max-width: calc(100vw - 16px);
       padding: 5px;
       border-radius: 14px;
       background: color-mix(in srgb, var(--card) 92%, transparent);
       backdrop-filter: blur(14px) saturate(1.2);
-      -webkit-backdrop-filter: blur(14px) saturate(1.2);
       border: 1px solid var(--line);
       box-shadow: var(--shadow-lg);
     }
@@ -281,9 +301,10 @@
       flex-direction: column;
       align-items: center;
       gap: 3px;
+      min-width: 0;
       padding: 7px 13px 8px;
       border-radius: 10px;
-      font-size: 11.5px;
+      font-size: 12px;
       font-weight: 500;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -302,6 +323,12 @@
       height: 4px;
       border-radius: 50%;
       background: var(--gold);
+    }
+  }
+  @media (max-width: 370px) {
+    .dock a {
+      padding-inline: 8px;
+      letter-spacing: 0.04em;
     }
   }
 </style>
