@@ -102,7 +102,7 @@
             <Mark size={38} />
             <span>Bookwheel</span>
           </a>
-          <p class="colophon">{t('footer.colophon', { club: club.meta?.name ?? '' })}</p>
+          <p class="colophon">{t('footer.colophon')}</p>
           <a class="up" href="#top" onclick={(e) => scrollToSection(e, 'top')}>
             <Icon name="arrowUp" size={14} stroke={1.6} />
             {t('footer.top')}

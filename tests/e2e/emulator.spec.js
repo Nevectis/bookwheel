@@ -50,7 +50,6 @@ test('founding, joining by invite code, spinning, progress and the rating reveal
   await alice.getByTestId('club-name').fill('Seitenspringer');
   await alice.getByTestId('gate-submit').click();
   await expect(alice.locator('#wheel')).toBeVisible();
-  await expect(alice.locator('.top .club')).toHaveText('Seitenspringer');
 
   await addBook(alice, { title: 'Piranesi', author: 'Susanna Clarke', genre: 'Fantasy', pages: 272 });
   await addBook(alice, { title: 'Dune', author: 'Frank Herbert', genre: 'Sci-Fi', pages: 600 });
@@ -59,6 +58,7 @@ test('founding, joining by invite code, spinning, progress and the rating reveal
   // Invite code from the club dialog
   await alice.getByTestId('user-menu').click();
   await alice.getByTestId('open-club').click();
+  await expect(alice.getByRole('dialog')).toContainText('Seitenspringer');
   const code = (await alice.getByTestId('invite-code').getAttribute('aria-label')).trim();
   expect(code).toMatch(/^[A-Z2-9]{4}-[A-Z2-9]{4}$/);
   await alice.keyboard.press('Escape');

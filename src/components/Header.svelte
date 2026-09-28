@@ -61,11 +61,8 @@
 <header class="top" class:scrolled>
   <div class="container bar">
     <a class="brand" href="#top" aria-label="Bookwheel" onclick={(e) => scrollToSection(e, 'top')}>
-      <Mark size={40} />
-      <span class="words">
-        <span class="name">Bookwheel</span>
-        <span class="club">{club.meta?.name ?? ''}</span>
-      </span>
+      <Mark size={42} />
+      <span class="name">Bookwheel</span>
     </a>
 
     <nav class="links" aria-label={t('nav.sections')}>
@@ -156,28 +153,12 @@
     margin-right: auto;
     min-width: 0;
   }
-  .words {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
   .name {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 26px;
+    font-size: 31px;
     line-height: 1;
     letter-spacing: 0.005em;
-  }
-  .club {
-    margin-top: 3px;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .links {
     display: flex;
@@ -277,7 +258,7 @@
       height: 64px;
     }
     .name {
-      font-size: 23px;
+      font-size: 27px;
     }
     .dock {
       position: fixed;

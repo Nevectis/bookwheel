@@ -101,7 +101,7 @@ export const de = {
   'hero.reading2': 'gemeinsam drehen.',
   'hero.stats': ({ members, shelf, read }) =>
     `${plural(members, '{n} Mitglied', '{n} Mitglieder')} · ${plural(shelf, '{n} Buch im Regal', '{n} Bücher im Regal')} · ${read} gelesen`,
-  'footer.colophon': 'Ein Lesekreis-Werkzeug für {club}. Gesetzt aus der Cormorant Garamond und der Jost.',
+  'footer.colophon': 'Ein Begleiter für den Lesekreis.',
   'footer.top': 'Nach oben',
 
   'wheel.title': 'Das Rad',
@@ -357,7 +357,7 @@ export const en = {
   'hero.reading2': 'spin together.',
   'hero.stats': ({ members, shelf, read }) =>
     `${plural(members, '{n} member', '{n} members')} · ${plural(shelf, '{n} book on the shelf', '{n} books on the shelf')} · ${read} read`,
-  'footer.colophon': 'A reading-circle companion for {club}. Set in Cormorant Garamond and Jost.',
+  'footer.colophon': 'A reading-circle companion.',
   'footer.top': 'Back to top',
 
   'wheel.title': 'The wheel',
