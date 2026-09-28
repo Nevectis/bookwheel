@@ -1,27 +1,46 @@
 // Small Svelte actions for motion and interaction.
 import { prefersReducedMotion } from './ui.svelte.js';
 
-/** Fade/slide an element in the first time it scrolls into view. */
+/**
+ * Slide an element in as it scrolls into view. The element's resting state is
+ * fully visible (thumbnails, full-page captures and no-JS all see it); the
+ * animation only starts from hidden at the moment it plays.
+ */
 export function reveal(node, delay = 0) {
-  node.classList.add('reveal');
-  node.style.setProperty('--reveal-delay', `${delay}ms`);
-  if (!('IntersectionObserver' in window) || prefersReducedMotion()) {
-    node.classList.add('in');
+  if (prefersReducedMotion() || typeof node.animate !== 'function') return {};
+  const play = (wait) =>
+    node.animate([{ opacity: 0, transform: 'translateY(26px)' }, { opacity: 1, transform: 'none' }], {
+      duration: 800,
+      delay: wait,
+      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      fill: 'backwards',
+    });
+  // Already on screen at load: part of the page-load sequence.
+  if (node.getBoundingClientRect().top < window.innerHeight) {
+    play(delay);
     return {};
   }
+  if (!('IntersectionObserver' in window)) return {};
+  // Start just before it scrolls in, so it is never seen snapping to hidden.
   const io = new IntersectionObserver(
     (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          node.classList.add('in');
-          io.disconnect();
-        }
+      if (entries.some((e) => e.isIntersecting)) {
+        play(0);
+        io.disconnect();
       }
     },
-    { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
+    { rootMargin: '0px 0px 12% 0px' },
   );
   io.observe(node);
   return { destroy: () => io.disconnect() };
+}
+
+/** Smooth-scroll to a section without relying on hash navigation. */
+export function scrollToSection(event, id) {
+  event?.preventDefault();
+  const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
+  if (id === 'top') window.scrollTo({ top: 0, behavior });
+  else document.getElementById(id)?.scrollIntoView({ behavior, block: 'start' });
 }
 
 /** 3D tilt towards the pointer with a moving sheen (--mx/--my for CSS). */

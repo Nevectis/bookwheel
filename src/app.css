@@ -110,7 +110,6 @@
   box-sizing: border-box;
 }
 html {
-  scroll-behavior: smooth;
   scroll-padding-top: 88px;
   -webkit-text-size-adjust: 100%;
 }
@@ -447,33 +446,13 @@ input[type='search']::-webkit-search-cancel-button {
   max-width: 52ch;
 }
 
-/* Scroll reveal (see actions.js) */
-.reveal {
-  opacity: 0;
-  transform: translateY(26px);
-  transition:
-    opacity 0.8s var(--ease-out),
-    transform 0.8s var(--ease-out);
-  transition-delay: var(--reveal-delay, 0ms);
-}
-.reveal.in {
-  opacity: 1;
-  transform: none;
-}
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-  .reveal {
-    opacity: 1;
-    transform: none;
   }
 }

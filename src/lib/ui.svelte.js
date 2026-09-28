@@ -43,7 +43,14 @@ export function settleConfirm(value) {
   c?.resolve(value);
 }
 
-export function applyTheme(theme = ui.theme) {
+/** On load: apply a saved explicit choice; otherwise leave the page's theme alone. */
+export function initTheme() {
+  const root = globalThis.document?.documentElement;
+  if (root && (ui.theme === 'light' || ui.theme === 'dark')) root.setAttribute('data-theme', ui.theme);
+}
+
+/** From the menu: the user picked Auto, Light or Dark. */
+export function applyTheme(theme) {
   ui.theme = theme;
   prefs.set('theme', theme);
   const root = globalThis.document?.documentElement;

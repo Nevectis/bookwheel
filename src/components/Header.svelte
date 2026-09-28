@@ -6,6 +6,7 @@
   import { club } from '../lib/store.svelte.js';
   import { i18n, setLang, t } from '../lib/i18n.svelte.js';
   import { applyTheme, setSound, ui } from '../lib/ui.svelte.js';
+  import { scrollToSection } from '../lib/actions.js';
 
   const links = [
     { id: 'wheel', icon: 'spin', key: 'nav.wheel' },
@@ -37,7 +38,7 @@
 
 <header class="top" class:scrolled>
   <div class="container bar">
-    <a class="brand" href="#top" aria-label="Bookwheel">
+    <a class="brand" href="#top" aria-label="Bookwheel" onclick={(e) => scrollToSection(e, 'top')}>
       <span class="mark" aria-hidden="true">
         <svg viewBox="0 0 64 64">
           <circle cx="32" cy="32" r="30" fill="#c1902f" />
@@ -58,7 +59,7 @@
 
     <nav class="links" aria-label="Sections">
       {#each links as l}
-        <a href="#{l.id}" class:active={active === l.id} aria-current={active === l.id ? 'true' : undefined}>
+        <a href="#{l.id}" class:active={active === l.id} aria-current={active === l.id ? 'true' : undefined} onclick={(e) => scrollToSection(e, l.id)}>
           {t(l.key)}
         </a>
       {/each}
@@ -106,7 +107,7 @@
 
 <nav class="dock" aria-label="Sections">
   {#each links as l}
-    <a href="#{l.id}" class:active={active === l.id}>
+    <a href="#{l.id}" class:active={active === l.id} onclick={(e) => scrollToSection(e, l.id)}>
       <Icon name={l.icon} size={20} />
       <span>{t(l.key)}</span>
     </a>
@@ -116,7 +117,7 @@
 <style>
   .top {
     position: sticky;
-    top: 0;
+    top: env(safe-area-inset-top, 0px);
     z-index: 40;
     transition:
       background 0.3s ease,

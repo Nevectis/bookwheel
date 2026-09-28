@@ -121,6 +121,7 @@ test('the whole book-club loop', async ({ page }) => {
   const review = page.getByTestId('review-modal');
   await expect(review).toContainText('Geschafft!');
   await review.getByRole('button', { name: 'Später bewerten' }).click();
+  await expect(review).toBeHidden();
   await expect(page.locator('#current')).toContainText('Gelesen');
   await expect(me).toContainText('fertig!');
   await page.getByTestId('rate-now').click();
@@ -128,6 +129,7 @@ test('the whole book-club loop', async ({ page }) => {
   await page.getByTestId('review-text').fill('Wunderschön und seltsam.');
   await page.getByTestId('review-submit').click();
   await expect(page.getByText('Danke für deine Bewertung!')).toBeVisible();
+  await expect(review).toBeHidden();
   await expect(entry).toContainText('1 von 5 Bewertungen'); // sealed until everyone rated
 
   // ── Last missing rating reveals the average (4+5+3+4+5)/5 = 4.2 ──

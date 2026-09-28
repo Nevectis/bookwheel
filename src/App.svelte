@@ -19,11 +19,11 @@
   import WheelCard from './components/WheelCard.svelte';
   import { club } from './lib/store.svelte.js';
   import { i18n, t } from './lib/i18n.svelte.js';
-  import { anyDialogOpen, applyTheme, ui } from './lib/ui.svelte.js';
-  import { reveal } from './lib/actions.js';
+  import { anyDialogOpen, initTheme, ui } from './lib/ui.svelte.js';
+  import { reveal, scrollToSection } from './lib/actions.js';
 
   onMount(() => {
-    applyTheme();
+    initTheme();
     document.documentElement.lang = i18n.lang;
     club.init();
   });
@@ -96,7 +96,7 @@
     <footer class="container foot">
       <span class="fmark">Book<em>wheel</em></span>
       <span>{club.meta?.name}</span>
-      <a href="#top"><Icon name="arrowUp" size={15} /></a>
+      <a href="#top" onclick={(e) => scrollToSection(e, 'top')} aria-label="↑"><Icon name="arrowUp" size={15} /></a>
     </footer>
   </div>
 {/if}

@@ -10,7 +10,7 @@
   import { genreById, genreSwatch } from '../lib/genres.js';
   import { daysUntil, longDate, monthLabel, shortDay } from '../lib/dates.js';
   import { clampPage, nextGoal, percent } from '../lib/reading.js';
-  import { tilt } from '../lib/actions.js';
+  import { scrollToSection, tilt } from '../lib/actions.js';
   import { toast, ui } from '../lib/ui.svelte.js';
 
   const book = $derived(club.current);
@@ -198,7 +198,7 @@
         <p class="eyebrow">{t('current.eyebrow')}</p>
         <h2 class="none-title">{t('current.none')}</h2>
         <p class="none-hint">{t('current.noneHint')}</p>
-        <a class="btn" href="#wheel"><Icon name="spin" size={17} /> {t('wheel.spin')}</a>
+        <a class="btn" href="#wheel" onclick={(e) => scrollToSection(e, 'wheel')}><Icon name="spin" size={17} /> {t('wheel.spin')}</a>
       </div>
     {/if}
   {/key}

@@ -128,7 +128,15 @@ export function seedDemo(now = new Date()) {
   };
 }
 
-export function createDemoBackend({ storage = globalThis.localStorage, now = () => new Date() } = {}) {
+function browserStorage() {
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null; // blocked (private mode, sandboxed frame): run in memory
+  }
+}
+
+export function createDemoBackend({ storage = browserStorage(), now = () => new Date() } = {}) {
   let state = load();
   const authListeners = new Set();
   const dataListeners = new Set();
