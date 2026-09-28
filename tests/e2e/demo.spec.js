@@ -66,14 +66,14 @@ test('the whole book-club loop', async ({ page }) => {
 
   // ── The wheel shows title + author, never the genre ──
   // wait until the new slice has fully grown in (the author line appears last)
-  await expect(page.locator('.wheel-wrap svg text', { hasText: 'Susanna Clarke' })).toHaveCount(1);
-  const wheelTexts = await page.locator('.wheel-wrap svg text').allTextContents();
-  expect(wheelTexts).toContain('Piranesi');
-  expect(wheelTexts).toContain('Susanna Clarke');
-  for (const label of GENRE_LABELS) expect(wheelTexts).not.toContain(label);
+  await expect(page.locator('.volvelle svg text', { hasText: 'Susanna Clarke' })).toHaveCount(1);
+  const wheelTexts = (await page.locator('.volvelle svg text').allTextContents()).map((s) => s.trim().toLowerCase());
+  expect(wheelTexts).toContain('piranesi');
+  expect(wheelTexts).toContain('susanna clarke');
+  for (const label of GENRE_LABELS) expect(wheelTexts).not.toContain(label.toLowerCase());
 
   // ── Filter by genre ──
-  await page.locator('.fchip', { hasText: 'Fantasy' }).click();
+  await page.locator('.filters .tag', { hasText: 'Fantasy' }).click();
   await expect(wheelCount(page)).toHaveText(/2 Bücher im Rad/);
 
   // ── Spin (full animation) ──
@@ -144,7 +144,7 @@ test('the whole book-club loop', async ({ page }) => {
 
   // ── Spinning again and putting the book back (undo) ──
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.locator('.fchip', { hasText: 'Alle Genres' }).click();
+  await page.locator('.filters .tag', { hasText: 'Alle Genres' }).click();
   await expect(wheelCount(page)).toHaveText(/12 Bücher im Rad/);
   await page.getByTestId('spin').click();
   await page.getByTestId('confirm-yes').click();

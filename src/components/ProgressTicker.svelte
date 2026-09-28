@@ -1,9 +1,10 @@
 <script>
-  // "Wer liest wie weit?" – little pop-up bubbles under the wheel, one per
-  // member, showing the current book and how far they are. Re-sorts live.
+  // "Wer liest wie weit?" – a row of library checkout cards under the wheel,
+  // one per member: who, which book, how far, and a rubber stamp for the
+  // state against the reading goal. Re-sorts live as people read.
   import { flip } from 'svelte/animate';
   import { fly, scale } from 'svelte/transition';
-  import { backOut } from 'svelte/easing';
+  import { cubicOut } from 'svelte/easing';
   import Avatar from './Avatar.svelte';
   import Icon from './Icon.svelte';
   import Stars from './Stars.svelte';
@@ -59,11 +60,14 @@
 
 <section class="ticker" aria-labelledby="ticker-title">
   <div class="t-head">
-    <h2 id="ticker-title"><span class="pulse" aria-hidden="true"></span>{t('ticker.title')}</h2>
+    <div>
+      <p class="eyebrow">{book ? book.title : t('nav.current')}</p>
+      <h2 id="ticker-title">{t('ticker.title')}</h2>
+    </div>
     {#if rows.length > 2}
       <div class="arrows">
-        <button class="btn btn-icon btn-sm" type="button" disabled={!canLeft} onclick={() => nudge(-1)} aria-label="←"><Icon name="left" size={16} /></button>
-        <button class="btn btn-icon btn-sm" type="button" disabled={!canRight} onclick={() => nudge(1)} aria-label="→"><Icon name="right" size={16} /></button>
+        <button class="btn btn-icon btn-sm" type="button" disabled={!canLeft} onclick={() => nudge(-1)} aria-label="←"><Icon name="left" size={16} stroke={1.6} /></button>
+        <button class="btn btn-icon btn-sm" type="button" disabled={!canRight} onclick={() => nudge(1)} aria-label="→"><Icon name="right" size={16} stroke={1.6} /></button>
       </div>
     {/if}
   </div>
@@ -74,36 +78,36 @@
     <ul class="strip" bind:this={strip} onscroll={measure} data-testid="ticker">
       {#each rows as r, i (r.id)}
         {@const s = status(r)}
-        <li class="bubble" class:me={r.me} animate:flip={{ duration: 500 }} in:fly={{ y: 26, duration: 520, delay: 80 * i, easing: backOut }} style:--c={r.member.color}>
-          <div class="b-top">
-            <Avatar member={r.member} size={38} />
-            <div class="who">
-              <p class="name">
-                {r.member.name}
-                {#if r.me}<span class="you">{t('common.you')}</span>{/if}
-              </p>
-              <p class="book" title={book.title}><Icon name="book" size={12} /> {book.title}</p>
-            </div>
+        <li
+          class="card-slip"
+          class:me={r.me}
+          animate:flip={{ duration: 500 }}
+          in:fly={{ y: 22, duration: 600, delay: 70 * i, easing: cubicOut }}
+          style:--c={r.member.color}
+          style:--tilt="{((i % 3) - 1) * 0.7}deg"
+        >
+          <div class="slip-head">
+            <Avatar member={r.member} size={34} />
+            <p class="name">
+              {r.member.name}
+              {#if r.me}<span class="you">{t('common.you')}</span>{/if}
+            </p>
           </div>
+          <p class="book" title={book.title}>{book.title}</p>
           <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={r.pct} aria-label={r.member.name}>
             <span style:width="{r.pct}%"></span>
           </div>
-          <div class="b-foot">
+          <div class="slip-foot">
             {#key r.page}
-              <span class="pages" in:scale={{ start: 0.7, duration: 400, easing: backOut }}>
+              <span class="pages" in:fly={{ y: -6, duration: 400 }}>
                 {book.pageCount ? t('ticker.ofPages', { page: r.page, total: book.pageCount }) : t('ticker.page', { page: r.page })}
               </span>
             {/key}
-            <span class="state {s.cls}">
-              {#if s.cls === 'done'}<Icon name="check" size={12} stroke={3} />{/if}
-              {#if s.cls === 'behind'}<Icon name="hourglass" size={12} />{/if}
-              {#if s.cls === 'ok'}<Icon name="flag" size={12} />{/if}
-              {s.text}
-            </span>
+            {#if r.showRating}
+              <span class="rated"><Stars value={r.entry.rating} size={12} /></span>
+            {/if}
           </div>
-          {#if r.showRating}
-            <div class="rated"><Stars value={r.entry.rating} size={13} /></div>
-          {/if}
+          <span class="stamp {s.cls}">{s.text}</span>
         </li>
       {/each}
     </ul>
@@ -116,187 +120,190 @@
   }
   .t-head {
     display: flex;
-    align-items: center;
+    align-items: end;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 4px;
+  }
+  .t-head .eyebrow {
+    color: var(--oxblood);
   }
   h2 {
-    font-size: 22px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .pulse {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 60%, transparent);
-    animation: live 2.2s ease-out infinite;
-  }
-  @keyframes live {
-    70% {
-      box-shadow: 0 0 0 10px transparent;
-    }
-    100% {
-      box-shadow: 0 0 0 0 transparent;
-    }
+    font-size: clamp(30px, 3.6vw, 40px);
+    font-weight: 500;
+    margin-top: 4px;
   }
   .arrows {
     display: flex;
     gap: 6px;
   }
   .empty {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 19px;
     color: var(--ink-soft);
-    padding: 14px 0;
+    padding: 16px 0;
   }
   .strip {
     list-style: none;
-    margin: 0 calc(-1 * clamp(16px, 4vw, 32px));
-    padding: 16px clamp(16px, 4vw, 32px) 18px;
+    margin: 0 calc(-1 * clamp(16px, 4vw, 36px));
+    padding: 22px clamp(16px, 4vw, 36px) 26px;
     display: flex;
-    gap: 14px;
+    gap: 18px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    scroll-padding: 0 clamp(16px, 4vw, 32px);
+    scroll-padding: 0 clamp(16px, 4vw, 36px);
     scrollbar-width: none;
-    mask-image: linear-gradient(90deg, transparent, #000 clamp(16px, 4vw, 32px), #000 calc(100% - clamp(16px, 4vw, 32px)), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 clamp(16px, 4vw, 36px), #000 calc(100% - clamp(16px, 4vw, 36px)), transparent);
   }
   .strip::-webkit-scrollbar {
     display: none;
   }
-  .bubble {
+  /* a library index card: red header rule, faint blue lines */
+  .card-slip {
+    --slip: #fbf6e9;
+    --slip-line: rgba(88, 128, 170, 0.18);
+    --slip-red: rgba(170, 60, 60, 0.45);
     position: relative;
     flex: 0 0 auto;
-    width: 264px;
+    width: 262px;
     scroll-snap-align: start;
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 14px 14px 12px;
-    box-shadow: var(--shadow-md);
+    padding: 14px 16px 14px;
+    border-radius: 3px;
+    background:
+      linear-gradient(var(--slip-red), var(--slip-red)) 0 50px / 100% 1px no-repeat,
+      repeating-linear-gradient(to bottom, transparent 0 23px, var(--slip-line) 23px 24px) 0 50px / 100% calc(100% - 50px) no-repeat,
+      var(--slip);
+    color: #2a2420;
+    box-shadow:
+      0 1px 1px rgba(60, 40, 20, 0.12),
+      0 10px 20px -12px rgba(60, 40, 20, 0.35);
+    transform: rotate(var(--tilt));
     transition:
-      transform 0.25s var(--ease-spring),
-      box-shadow 0.25s ease;
+      transform 0.4s var(--ease-out),
+      box-shadow 0.4s var(--ease-out);
   }
-  /* speech-bubble tail pointing up at the wheel */
-  .bubble::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: 26px;
-    width: 14px;
-    height: 14px;
-    background: var(--card);
-    border-left: 1px solid var(--line);
-    border-top: 1px solid var(--line);
-    transform: rotate(45deg);
-    border-radius: 3px 0 0 0;
+  :global(:root[data-theme='dark']) .card-slip {
+    --slip: #e7dcc6;
   }
-  .bubble:hover {
-    transform: translateY(-4px) rotate(-0.6deg);
-    box-shadow: var(--shadow-lg);
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .card-slip {
+      --slip: #e7dcc6;
+    }
   }
-  .bubble.me {
-    border-color: color-mix(in srgb, var(--c) 55%, var(--line));
-    background: linear-gradient(160deg, color-mix(in srgb, var(--c) 10%, var(--card)), var(--card) 60%);
+  .card-slip:hover {
+    transform: rotate(0deg) translateY(-4px);
+    box-shadow:
+      0 1px 1px rgba(60, 40, 20, 0.12),
+      0 18px 30px -14px rgba(60, 40, 20, 0.45);
   }
-  .bubble.me::before {
-    border-color: color-mix(in srgb, var(--c) 55%, var(--line));
-    background: color-mix(in srgb, var(--c) 10%, var(--card));
+  .card-slip.me {
+    box-shadow:
+      0 0 0 1.5px color-mix(in srgb, var(--c) 70%, transparent),
+      0 10px 20px -12px rgba(60, 40, 20, 0.35);
   }
-  .b-top {
+  .slip-head {
     display: flex;
     align-items: center;
     gap: 10px;
-    min-width: 0;
+    height: 32px;
   }
-  .who {
-    min-width: 0;
+  .slip-head :global(.avatar) {
+    box-shadow: 0 0 0 1.5px var(--slip);
   }
   .name {
-    font-weight: 800;
-    font-size: 15px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 21px;
+    line-height: 1;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
   }
   .you {
-    font-size: 10.5px;
-    font-weight: 800;
+    font-family: var(--font-body);
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 1px 6px;
-    border-radius: 6px;
-    background: var(--c);
-    color: #fff;
+    padding: 2px 5px;
+    border-radius: 3px;
+    border: 1px solid currentColor;
+    color: #6b5d50;
   }
   .book {
-    font-size: 12.5px;
-    color: var(--ink-soft);
+    margin-top: 12px;
+    font-family: var(--font-type);
+    font-size: 13px;
+    line-height: 24px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    gap: 4px;
   }
   .bar {
-    height: 7px;
-    border-radius: 99px;
-    background: var(--card-2);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-    margin: 12px 0 9px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(60, 40, 20, 0.12);
+    margin: 9px 0 8px;
     overflow: hidden;
   }
   .bar span {
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, color-mix(in srgb, var(--c) 70%, white), var(--c));
+    background: var(--c);
     transition: width 1.1s var(--ease-out);
-    animation: grow 1.2s var(--ease-out) both;
+    animation: grow 1.3s var(--ease-out) both;
   }
   @keyframes grow {
     from {
       width: 0;
     }
   }
-  .b-foot {
+  .slip-foot {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 8px;
+    min-height: 34px;
   }
   .pages {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 500;
+    font-family: var(--font-type);
+    font-size: 13px;
     white-space: nowrap;
   }
-  .state {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11.5px;
-    font-weight: 800;
-    padding: 2px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
-    background: var(--card-2);
-    color: var(--ink-soft);
+  /* rubber stamp */
+  .stamp {
+    position: absolute;
+    right: 12px;
+    bottom: 14px;
+    max-width: 52%;
+    padding: 3px 7px 2px;
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+    font-family: var(--font-body);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    line-height: 1.25;
+    text-transform: uppercase;
+    text-align: center;
+    transform: rotate(-5deg);
+    opacity: 0.82;
+    mix-blend-mode: multiply;
+    -webkit-mask-image: radial-gradient(circle at 30% 40%, #000 60%, rgba(0, 0, 0, 0.72) 61%, #000 75%);
+    mask-image: radial-gradient(circle at 30% 40%, #000 60%, rgba(0, 0, 0, 0.72) 61%, #000 75%);
+    color: #7a6e62;
   }
-  .state.done,
-  .state.ok {
-    background: var(--green-soft);
-    color: var(--green);
+  .stamp.done,
+  .stamp.ok {
+    color: #2f6a45;
   }
-  .state.behind {
-    background: var(--red-soft);
-    color: var(--red);
+  .stamp.behind {
+    color: #a23a2c;
+  }
+  .stamp.open {
+    color: #2c4d7a;
   }
   .rated {
-    margin-top: 8px;
+    display: inline-flex;
   }
 </style>

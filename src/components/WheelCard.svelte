@@ -75,21 +75,17 @@
   }
 </script>
 
-<section id="wheel" class="card wheel-card" aria-labelledby="wheel-title">
+<section id="wheel" class="card page-rule wheel-card" aria-labelledby="wheel-title">
   <header class="wc-head">
     <div>
       <p class="eyebrow">{t('nav.wheel')}</p>
       <h2 id="wheel-title">{t('wheel.title')}</h2>
     </div>
-    <span class="count-pill" aria-live="polite">
-      <Icon name="books" size={16} />
-      {t('wheel.count', { n: items.length })}
-    </span>
+    <p class="count-pill" aria-live="polite">{t('wheel.count', { n: items.length })}</p>
   </header>
 
   <div class="filters" role="group" aria-label={t('wheel.filter')}>
-    <button type="button" class="fchip all" class:on={!selected.length} aria-pressed={!selected.length} onclick={() => (selected = [])}>
-      <Icon name="sparkles" size={14} />
+    <button type="button" class="tag all" class:on={!selected.length} aria-pressed={!selected.length} onclick={() => (selected = [])}>
       {t('wheel.allGenres')}
     </button>
     {#each GENRES as g (g.id)}
@@ -97,12 +93,11 @@
       {@const on = selected.includes(g.id)}
       <button
         type="button"
-        class="fchip"
+        class="tag"
         class:on
         aria-pressed={on}
         disabled={!n && !on}
         style:--gc={genreSwatch(g.id)}
-        style:--gsolid={g.color}
         onclick={() => toggle(g.id)}
       >
         <span class="dot" style:background={genreSwatch(g.id)}></span>
@@ -122,6 +117,7 @@
       disabled={!items.length}
       hubLabel={t('wheel.spin')}
       emptyText={club.shelf.length ? '' : t('wheel.emptyCenter')}
+      ringText={club.meta?.name || 'Bookwheel'}
       onhub={spin}
       ontick={(s) => ui.sound && tick(s)}
     />
@@ -131,15 +127,15 @@
     {#if !club.shelf.length}
       <p class="hint">{t('wheel.empty')}</p>
       <button class="btn btn-primary" type="button" onclick={() => (ui.bookForm = { mode: 'add' })}>
-        <Icon name="plus" size={18} />
+        <Icon name="plus" size={17} />
         {t('shelf.add')}
       </button>
     {:else if !items.length}
       <p class="hint">{t('wheel.emptyFilter')}</p>
     {:else}
-      <button class="spin-btn" type="button" onclick={spin} disabled={spinning} data-testid="spin">
-        <span class="spin-ico" class:go={spinning}><Icon name="spin" size={22} stroke={2.4} /></span>
-        <span>{spinning ? t('wheel.spinning') : t('wheel.spin')}</span>
+      <button class="btn btn-primary spin-btn" type="button" onclick={spin} disabled={spinning} data-testid="spin">
+        <span class="spin-ico" class:go={spinning}><Icon name="spin" size={19} stroke={1.6} /></span>
+        <span class="spin-label">{spinning ? t('wheel.spinning') : t('wheel.spin')}</span>
       </button>
     {/if}
   </div>
@@ -148,16 +144,8 @@
 
 <style>
   .wheel-card {
-    padding: clamp(20px, 3.5vw, 32px);
+    padding: clamp(24px, 3.6vw, 38px);
     overflow: hidden;
-  }
-  .wheel-card::before {
-    content: '';
-    position: absolute;
-    inset: -40% -20% auto;
-    height: 70%;
-    background: radial-gradient(closest-side, var(--glow-2), transparent);
-    pointer-events: none;
   }
   .wc-head {
     position: relative;
@@ -168,169 +156,114 @@
     flex-wrap: wrap;
   }
   h2 {
-    font-size: clamp(28px, 4vw, 36px);
+    font-size: clamp(34px, 4.4vw, 46px);
+    font-weight: 500;
+    margin-top: 6px;
   }
   .count-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: var(--gold-soft);
-    color: color-mix(in srgb, var(--gold) 55%, var(--ink));
-    font-weight: 700;
-    font-size: 13.5px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-soft);
   }
   .filters {
     position: relative;
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
-    margin: 18px 0 8px;
+    gap: 6px;
+    margin: 20px 0 6px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
   }
-  .fchip {
+  .tag {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 6px 11px 6px 9px;
-    border-radius: 999px;
-    border: 1.5px solid var(--line);
-    background: var(--card-2);
+    padding: 5px 10px 5px 9px;
+    border-radius: 4px;
+    border: 1px solid var(--line-strong);
+    background: transparent;
     color: var(--ink-soft);
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
     transition:
-      transform 0.2s var(--ease-spring),
-      color 0.25s ease,
-      border-color 0.25s ease;
+      background-color 0.25s var(--ease-soft),
+      color 0.25s var(--ease-soft),
+      border-color 0.25s var(--ease-soft);
   }
-  .fchip::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: var(--gc, var(--accent));
-    transform: scale(0);
-    border-radius: inherit;
-    transition: transform 0.35s var(--ease-out);
+  .tag:hover:not(:disabled) {
+    border-color: var(--ink-faint);
+    color: var(--ink);
   }
-  .fchip.all::before {
+  .tag.on {
     background: var(--ink);
-  }
-  .fchip:hover:not(:disabled) {
-    transform: translateY(-1px);
-    border-color: var(--line-strong);
-  }
-  .fchip.on {
-    color: #fff;
-    border-color: transparent;
-  }
-  .fchip.all.on {
+    border-color: var(--ink);
     color: var(--paper);
   }
-  .fchip.on::before {
-    transform: scale(1);
+  .tag.on:not(.all) {
+    background: var(--gc);
+    border-color: transparent;
+    color: #fbf5ea;
   }
-  .fchip.on .dot {
-    background: #fff !important;
+  .tag.on .dot {
+    background: #fbf5ea !important;
   }
-  .fchip:disabled {
-    opacity: 0.38;
+  .tag:disabled {
+    opacity: 0.4;
     cursor: default;
   }
   .n {
-    font-family: var(--font-mono);
+    font-family: var(--font-type);
     font-size: 11px;
     opacity: 0.7;
-    font-weight: 500;
   }
   .stage {
     position: relative;
-    padding: 18px 0 6px;
+    padding: 34px 0 6px;
   }
   .spin-row {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    margin-top: 12px;
-    min-height: 64px;
+    margin-top: 22px;
+    min-height: 60px;
   }
   .hint {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 18px;
     color: var(--ink-soft);
     text-align: center;
   }
   .spin-btn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
+    min-height: 54px;
+    padding: 10px 34px 10px 28px;
     gap: 12px;
-    padding: 16px 38px;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: #fff8f0;
-    background: linear-gradient(180deg, #b3475f, #8c2f45 60%, #74243a);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.35) inset,
-      0 -3px 0 rgba(0, 0, 0, 0.2) inset,
-      0 6px 0 #5a1a2b,
-      0 14px 28px -8px rgba(140, 47, 69, 0.7);
-    overflow: hidden;
-    transition:
-      transform 0.18s var(--ease-spring),
-      box-shadow 0.18s ease,
-      filter 0.2s ease;
-  }
-  .spin-btn::after {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 -60%;
-    width: 40%;
-    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-    transform: skewX(-20deg);
-    animation: sweep 3.6s ease-in-out infinite;
-  }
-  @keyframes sweep {
-    0%,
-    55% {
-      left: -60%;
-    }
-    100% {
-      left: 130%;
-    }
-  }
-  .spin-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    filter: brightness(1.06);
-  }
-  .spin-btn:active:not(:disabled) {
-    transform: translateY(5px);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.35) inset,
-      0 1px 0 #5a1a2b,
-      0 6px 14px -8px rgba(140, 47, 69, 0.7);
+    border-radius: 10px;
   }
   .spin-btn:disabled {
+    opacity: 1;
     cursor: progress;
-    filter: saturate(0.75);
   }
-  .spin-btn:disabled::after {
-    animation-duration: 1s;
+  .spin-btn:disabled .spin-label {
+    opacity: 0.85;
+  }
+  .spin-label {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: 0.01em;
   }
   .spin-ico {
     display: grid;
+    color: var(--gold-2);
   }
   .spin-ico.go {
-    animation: rot 0.7s linear infinite;
+    animation: rot 1.1s linear infinite;
   }
   @keyframes rot {
     to {
@@ -341,15 +274,15 @@
     .filters {
       flex-wrap: nowrap;
       overflow-x: auto;
-      margin-inline: -20px;
-      padding: 2px 20px 6px;
+      margin-inline: -24px;
+      padding: 16px 24px 6px;
       scrollbar-width: none;
-      mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 20px, #000 calc(100% - 20px), transparent);
     }
     .filters::-webkit-scrollbar {
       display: none;
     }
-    .fchip {
+    .tag {
       flex: none;
     }
   }

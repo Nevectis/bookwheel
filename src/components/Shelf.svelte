@@ -1,7 +1,7 @@
 <script>
   import { flip } from 'svelte/animate';
   import { fly, scale } from 'svelte/transition';
-  import { backOut, cubicIn } from 'svelte/easing';
+  import { cubicIn, cubicOut } from 'svelte/easing';
   import BookCover from './BookCover.svelte';
   import Icon from './Icon.svelte';
   import { club } from '../lib/store.svelte.js';
@@ -12,6 +12,15 @@
 
   let query = $state('');
   const q = $derived(query.trim().toLowerCase());
+  // Real shelves hold books of different sizes: vary each cover a little, stably per book.
+  function heightFor(id) {
+    let h = 0;
+    for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return 4 + (h % 9); // side padding 4–12 %
+  }
+  const titleWords = $derived(t('shelf.title').split(' '));
+  const titleHead = $derived(titleWords.slice(0, -1).join(' '));
+  const titleLast = $derived(titleWords.at(-1));
   const books = $derived(
     q
       ? club.shelf.filter((b) => `${b.title} ${b.author} ${genreById(b.genre).label}`.toLowerCase().includes(q))
@@ -23,16 +32,16 @@
   <div class="section-head" use:reveal>
     <div>
       <p class="eyebrow">{t('shelf.count', { n: club.shelf.length })}</p>
-      <h2 id="shelf-title" class="section-title">{t('shelf.title')}</h2>
+      <h2 id="shelf-title" class="section-title">{titleHead} <em>{titleLast}</em></h2>
       <p class="section-sub">{t('shelf.sub')}</p>
     </div>
     <div class="tools">
       <label class="search">
-        <Icon name="search" size={17} />
+        <Icon name="search" size={16} stroke={1.6} />
         <input type="search" bind:value={query} placeholder={t('shelf.search')} aria-label={t('shelf.search')} />
       </label>
       <button class="btn btn-primary" type="button" onclick={() => (ui.bookForm = { mode: 'add' })} data-testid="add-book">
-        <Icon name="plus" size={18} stroke={2.6} />
+        <Icon name="plus" size={16} stroke={1.8} />
         {t('shelf.add')}
       </button>
     </div>
@@ -54,12 +63,12 @@
           <li
             class="book"
             animate:flip={{ duration: 450 }}
-            in:fly={{ y: -60, duration: 700, easing: backOut }}
+            in:fly={{ y: -40, duration: 800, easing: cubicOut }}
             out:scale={{ start: 0.6, duration: 280, easing: cubicIn }}
           >
-            <button class="cover-btn" type="button" onclick={() => (ui.bookForm = { mode: 'edit', bookId: book.id })} aria-label="{t('common.edit')}: {book.title}">
+            <button class="cover-btn" style:--pad="{heightFor(book.id)}%" type="button" onclick={() => (ui.bookForm = { mode: 'edit', bookId: book.id })} aria-label="{t('common.edit')}: {book.title}">
               <span class="lift"><BookCover {book} /></span>
-              <span class="edit-badge" aria-hidden="true"><Icon name="edit" size={14} /></span>
+              <span class="edit-badge" aria-hidden="true"><Icon name="edit" size={13} stroke={1.6} /></span>
             </button>
             <span class="plank" aria-hidden="true"></span>
             <h3 class="b-title" title={book.title}>{book.title}</h3>
@@ -79,7 +88,7 @@
 <style>
   .tools {
     display: flex;
-    gap: 10px;
+    gap: 14px;
     flex-wrap: wrap;
     align-items: center;
   }
@@ -90,41 +99,60 @@
   }
   .search :global(svg) {
     position: absolute;
-    left: 13px;
+    left: 2px;
     color: var(--ink-faint);
     pointer-events: none;
   }
   .search input {
-    padding-left: 38px;
-    border-radius: 999px;
-    width: 240px;
+    width: 230px;
+    padding: 8px 4px 8px 28px;
+    border: none;
+    border-bottom: 1px solid var(--line-strong);
+    border-radius: 0;
+    background: transparent;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-style: italic;
   }
+  .search input:focus {
+    box-shadow: none;
+    border-bottom-color: var(--gold);
+    background: transparent;
+  }
+  /* the bookcase: a warm back panel, walnut shelves */
   .case {
     position: relative;
-    border-radius: 26px;
-    padding: clamp(18px, 3vw, 30px) clamp(14px, 3vw, 30px) 10px;
+    border-radius: 6px;
+    padding: clamp(26px, 3.5vw, 40px) clamp(18px, 3.2vw, 38px) 14px;
     background:
-      linear-gradient(180deg, rgba(0, 0, 0, 0.04), transparent 30%),
-      var(--paper-2);
-    border: 1px solid var(--line);
-    box-shadow: inset 0 2px 12px rgba(60, 35, 15, 0.08);
+      linear-gradient(180deg, rgba(40, 22, 10, 0.12), transparent 22%),
+      repeating-linear-gradient(90deg, rgba(90, 60, 30, 0.035) 0 2px, transparent 2px 9px),
+      var(--wall);
+    border: 1px solid var(--line-strong);
+    box-shadow:
+      inset 0 10px 24px -14px rgba(40, 22, 10, 0.45),
+      inset 0 0 0 6px color-mix(in srgb, var(--wood-2) 22%, transparent),
+      var(--shadow-sm);
   }
   .empty {
     text-align: center;
-    padding: 40px 10px;
+    padding: 46px 10px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 20px;
     color: var(--ink-soft);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
   }
   .grid {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-    gap: 26px 22px;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 30px 24px;
   }
   .book {
     position: relative;
@@ -132,32 +160,39 @@
     flex-direction: column;
     min-width: 0;
   }
+  /* every book gets the same slot; covers stand on its floor at their own size */
   .cover-btn {
     position: relative;
-    display: block;
-    padding: 0 8% 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    aspect-ratio: 1 / 1.38;
+    padding: 0;
     border: none;
     background: none;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 6px;
     z-index: 1;
   }
   .lift {
     display: block;
-    transform-origin: 50% 100%;
-    transition: transform 0.35s var(--ease-spring);
+    width: calc(100% - 2 * var(--pad, 9%));
+    transition:
+      transform 0.5s var(--ease-out),
+      filter 0.5s var(--ease-out);
   }
   .cover-btn:hover .lift,
   .cover-btn:focus-visible .lift {
-    transform: translateY(-10px) rotate(-2deg);
+    transform: translateY(-10px);
+    filter: drop-shadow(0 14px 12px rgba(40, 22, 10, 0.25));
   }
   .edit-badge {
     position: absolute;
     top: 8px;
-    right: calc(8% + 6px);
+    right: calc(var(--pad, 9%) + 7px);
     z-index: 4;
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     display: grid;
     place-items: center;
@@ -165,32 +200,32 @@
     color: var(--ink);
     box-shadow: var(--shadow-sm);
     opacity: 0;
-    transform: scale(0.6);
+    transform: translateY(-4px);
     transition:
-      opacity 0.2s,
-      transform 0.3s var(--ease-spring);
+      opacity 0.3s,
+      transform 0.5s var(--ease-out);
   }
   .cover-btn:hover .edit-badge,
   .cover-btn:focus-visible .edit-badge {
     opacity: 1;
-    transform: translateY(-10px) scale(1);
+    transform: translateY(-10px);
   }
+  /* walnut shelf board with a lit front edge */
   .plank {
     display: block;
-    height: 13px;
-    margin: -3px -12px 12px;
-    border-radius: 3px;
+    height: 14px;
+    margin: -4px -15px 14px;
+    border-radius: 2px;
     background:
-      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 31px),
+      linear-gradient(180deg, rgba(255, 230, 190, 0.28) 0 1px, transparent 1px 4px, rgba(0, 0, 0, 0.18) 100%),
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 13px, rgba(255, 220, 170, 0.05) 13px 15px, transparent 15px 37px),
       linear-gradient(180deg, var(--wood-1), var(--wood-2));
-    box-shadow:
-      0 8px 12px -6px rgba(50, 25, 5, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    box-shadow: 0 10px 12px -8px rgba(30, 15, 5, 0.55);
   }
   .b-title {
-    font-size: 15.5px;
-    font-weight: 700;
-    line-height: 1.2;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.12;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -198,9 +233,11 @@
     overflow: hidden;
   }
   .b-author {
-    font-size: 13.5px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
     color: var(--ink-soft);
-    margin-top: 3px;
+    margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -209,9 +246,11 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-top: 7px;
-    font-size: 12px;
-    font-weight: 700;
+    margin-top: 8px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: var(--ink-soft);
     min-width: 0;
   }
@@ -221,9 +260,10 @@
     text-overflow: ellipsis;
   }
   .b-by {
-    font-size: 11.5px;
+    font-family: var(--font-type);
+    font-size: 11px;
     color: var(--ink-faint);
-    margin-top: 2px;
+    margin-top: 3px;
   }
   @media (max-width: 640px) {
     .tools,
@@ -235,11 +275,11 @@
       width: 100%;
     }
     .grid {
-      grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-      gap: 22px 14px;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 24px 14px;
     }
     .b-title {
-      font-size: 14px;
+      font-size: 16px;
     }
   }
 </style>

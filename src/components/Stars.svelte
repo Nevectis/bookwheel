@@ -31,7 +31,7 @@
 <style>
   .stars {
     display: inline-flex;
-    gap: calc(var(--s) * 0.12);
+    gap: calc(var(--s) * 0.1);
     vertical-align: middle;
   }
   .star {
@@ -46,21 +46,23 @@
     display: block;
   }
   .bg path {
-    fill: var(--line);
-    stroke: var(--line-strong);
-    stroke-width: 0.6;
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 1.1;
+    stroke-linejoin: round;
+    opacity: 0.55;
   }
   .fill {
     position: absolute;
     inset: 0 auto 0 0;
     overflow: hidden;
-    transition: width 0.55s var(--ease-out);
-    transition-delay: calc(var(--i) * 130ms);
+    transition: width 0.7s var(--ease-out);
+    transition-delay: calc(var(--i) * 140ms);
   }
   .fill path {
     fill: var(--gold);
-    stroke: color-mix(in srgb, var(--gold) 70%, black);
-    stroke-width: 0.6;
-    filter: drop-shadow(0 1px 1px rgba(120, 80, 10, 0.25));
+    stroke: var(--gold);
+    stroke-width: 1.1;
+    stroke-linejoin: round;
   }
 </style>

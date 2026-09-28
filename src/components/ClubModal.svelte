@@ -122,57 +122,66 @@
 
 <style>
   .club-name {
-    font-size: 30px;
+    font-size: 36px;
+    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 6px;
-    margin: 4px 40px 18px 0;
+    margin: 6px 40px 22px 0;
   }
   .rename {
     display: flex;
     gap: 8px;
-    margin: 8px 0 18px;
+    margin: 8px 0 22px;
   }
   .invite {
-    padding: 18px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, var(--gold-soft), var(--accent-soft));
+    padding: 20px 20px 18px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--paper-2) 55%, var(--card));
+    border: 1px solid var(--line);
   }
   .code {
     display: flex;
     gap: 5px;
-    margin: 10px 0;
+    margin: 12px 0 12px;
     flex-wrap: wrap;
   }
+  /* typewriter keys on card stock */
   .code span {
     display: grid;
     place-items: center;
     width: 36px;
     height: 46px;
-    border-radius: 10px;
-    background: var(--card);
-    font-family: var(--font-mono);
-    font-weight: 500;
-    font-size: 22px;
-    box-shadow: var(--shadow-sm);
-    animation: drop 0.5s var(--ease-spring) both;
-    animation-delay: calc(var(--i) * 45ms);
+    border-radius: 3px;
+    background: #fbf6e9;
+    color: #2a2420;
+    font-family: var(--font-type);
+    font-weight: 700;
+    font-size: 24px;
+    box-shadow:
+      inset 0 -2px 0 rgba(60, 40, 20, 0.08),
+      0 1px 2px rgba(60, 40, 20, 0.18);
+    animation: type 0.35s steps(2, end) both;
+    animation-delay: calc(var(--i) * 70ms);
   }
   .code span.dash {
     width: 14px;
     background: none;
     box-shadow: none;
+    color: var(--ink-faint);
   }
-  @keyframes drop {
+  @keyframes type {
     from {
-      transform: translateY(-12px) rotate(-8deg);
       opacity: 0;
+      transform: translateY(-3px);
     }
   }
   .hint {
-    font-size: 13px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16.5px;
     color: var(--ink-soft);
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
   .row {
     display: flex;
@@ -180,32 +189,32 @@
     gap: 8px;
   }
   .members-title {
-    font-size: 19px;
-    margin: 22px 0 10px;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 28px 0 6px;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid var(--ink);
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: baseline;
+    gap: 10px;
   }
   .members-title span {
-    font-family: var(--font-mono);
-    font-size: 13px;
+    font-family: var(--font-type);
+    font-size: 14px;
+    font-weight: 400;
     color: var(--ink-faint);
   }
   .members {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
   }
   .members li {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px;
-    border-radius: 14px;
-    background: var(--card-2);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
   }
   .m-text {
     display: flex;
@@ -215,27 +224,31 @@
   }
   .m-text strong {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     align-items: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 19px;
   }
   .m-text span {
-    font-size: 12.5px;
+    font-size: 12px;
     color: var(--ink-soft);
     display: inline-flex;
     align-items: center;
     gap: 4px;
   }
   .you {
-    font-size: 10px !important;
-    font-weight: 800;
+    font-family: var(--font-body);
+    font-size: 9.5px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 1px 6px;
-    border-radius: 6px;
-    background: var(--accent);
-    color: var(--accent-ink) !important;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-soft) !important;
   }
   .leave {
-    margin-top: 18px;
+    margin-top: 20px;
   }
 </style>

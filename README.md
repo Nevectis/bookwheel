@@ -86,6 +86,17 @@ workflow rebuilds and redeploys the site.
 > Tip: `?demo` at the end of the URL always opens the local demo, even on a
 > configured site, which is handy for showing Bookwheel off without touching real data.
 
+## Design
+
+The look is a reading room: aged paper, bottle-green bookcloth, an oxblood
+ribbon and muted gilt. Type is set in Cormorant Garamond (display), Jost
+(interface) and Courier Prime (anything "typed" onto a card). The wheel is
+drawn as a *volvelle*, the rotating paper disc found in old books.
+
+The textures in `public/textures/` are generated, not downloaded:
+`marble.jpg` is Turkish "stone" marbling made with Aubrey Jaffer's
+mathematical ink-drop model, and `paper.jpg` is a tileable fibre texture.
+
 ## How it works
 
 ```

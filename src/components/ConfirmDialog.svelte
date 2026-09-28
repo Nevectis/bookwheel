@@ -17,7 +17,7 @@
 <style>
   .msg {
     font-family: var(--font-display);
-    font-size: 21px;
+    font-size: 24px;
     line-height: 1.3;
     padding-right: 30px;
     margin-bottom: 22px;

@@ -48,47 +48,48 @@
 <style>
   .star-input {
     display: inline-flex;
-    gap: 4px;
+    gap: 6px;
     outline: none;
   }
   button {
     background: none;
     border: none;
-    padding: 3px;
+    padding: 4px;
     cursor: pointer;
-    border-radius: 10px;
+    border-radius: 8px;
     line-height: 0;
-    transition: transform 0.2s var(--ease-spring);
+    transition: transform 0.3s var(--ease-out);
   }
   button:hover {
-    transform: scale(1.12) rotate(-4deg);
+    transform: translateY(-2px);
   }
   svg {
     width: var(--s);
     height: var(--s);
   }
   path {
-    fill: var(--card-2);
-    stroke: var(--line-strong);
-    stroke-width: 1.2;
+    fill: transparent;
+    stroke: var(--gold);
+    stroke-width: 1;
     stroke-linejoin: round;
+    opacity: 0.7;
     transition:
-      fill 0.18s ease,
-      stroke 0.18s ease;
+      fill 0.25s ease,
+      opacity 0.25s ease;
   }
   .on path {
     fill: var(--gold);
-    stroke: color-mix(in srgb, var(--gold) 70%, black);
+    opacity: 1;
   }
   .pop {
-    animation: pop 0.45s var(--ease-spring) var(--d) both;
+    animation: pop 0.6s var(--ease-out) var(--d) both;
   }
   @keyframes pop {
     0% {
       transform: scale(1);
     }
-    40% {
-      transform: scale(1.35) rotate(8deg);
+    35% {
+      transform: scale(1.18);
     }
     100% {
       transform: scale(1);

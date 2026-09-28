@@ -244,7 +244,7 @@
       <span class="spacer"></span>
       <button type="button" class="btn btn-ghost" onclick={onclose}>{t('common.cancel')}</button>
       <button type="submit" class="btn btn-primary" disabled={busy} data-testid="book-submit">
-        {#if mode === 'add'}<Icon name="plus" size={17} stroke={2.6} />{t('add.submit')}{:else}{t('common.save')}{/if}
+        {#if mode === 'add'}{t('add.submit')}{:else}{t('common.save')}{/if}
       </button>
     </div>
   </form>
@@ -252,14 +252,16 @@
 
 <style>
   .m-title {
-    font-size: 28px;
-    margin: 0 40px 18px 0;
+    font-size: 34px;
+    font-weight: 500;
+    margin: 0 40px 20px 0;
   }
   .lookup {
-    padding: 16px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, var(--accent-soft), var(--gold-soft));
-    margin-bottom: 20px;
+    padding: 16px 18px 14px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--paper-2) 60%, var(--card));
+    border: 1px solid var(--line);
+    margin-bottom: 24px;
   }
   .lookup-input {
     position: relative;
@@ -282,8 +284,8 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    border: 2.5px solid var(--line);
-    border-top-color: var(--accent);
+    border: 2px solid var(--line);
+    border-top-color: var(--gold);
     animation: spin 0.7s linear infinite;
   }
   @keyframes spin {
@@ -292,7 +294,9 @@
     }
   }
   .hint {
-    font-size: 13px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
     color: var(--ink-soft);
     margin-top: 8px;
   }
@@ -301,7 +305,7 @@
     margin: 10px 0 0;
     padding: 6px;
     background: var(--card);
-    border-radius: 14px;
+    border-radius: 8px;
     border: 1px solid var(--line);
     max-height: 290px;
     overflow-y: auto;
@@ -339,7 +343,9 @@
     flex: 1;
   }
   .r-text strong {
-    font-size: 14.5px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -406,35 +412,34 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 7px 12px 7px 10px;
-    border-radius: 999px;
-    border: 1.5px solid var(--line);
-    background: var(--card-2);
-    font-size: 13.5px;
-    font-weight: 700;
+    padding: 6px 11px 6px 9px;
+    border-radius: 4px;
+    border: 1px solid var(--line-strong);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
     cursor: pointer;
     transition:
-      transform 0.2s var(--ease-spring),
       border-color 0.2s,
       background 0.2s,
       color 0.2s;
   }
   .gopt:hover {
-    transform: translateY(-1px);
-    border-color: var(--line-strong);
+    border-color: var(--ink-faint);
+    color: var(--ink);
   }
   .gopt:focus-within {
-    outline: 2.5px solid var(--accent);
+    outline: 2px solid var(--gold);
     outline-offset: 2px;
   }
   .gopt.on {
     background: var(--gc);
-    color: #fff;
+    color: #fbf5ea;
     border-color: transparent;
-    transform: scale(1.04);
   }
   .gopt.on .dot {
-    background: #fff !important;
+    background: #fbf5ea !important;
   }
   .actions {
     display: flex;

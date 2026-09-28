@@ -1,11 +1,12 @@
 <script>
   import { onMount, untrack } from 'svelte';
   import { fly } from 'svelte/transition';
-  import confetti from 'canvas-confetti';
+  import { goldLeaf } from '../lib/goldleaf.js';
   import Modal from './Modal.svelte';
   import BookCover from './BookCover.svelte';
   import Icon from './Icon.svelte';
   import StarInput from './StarInput.svelte';
+  import WaxSeal from './WaxSeal.svelte';
   import { club } from '../lib/store.svelte.js';
   import { t, formatAverage } from '../lib/i18n.svelte.js';
   import { prefersReducedMotion, toast } from '../lib/ui.svelte.js';
@@ -22,9 +23,7 @@
 
   onMount(() => {
     if (!congrats || prefersReducedMotion() || !canvas) return;
-    const fire = confetti.create(canvas, { resize: true });
-    fire({ particleCount: 70, spread: 80, startVelocity: 40, origin: { x: 0.5, y: 0.3 }, colors: ['#c1902f', '#f3d58e', '#3f7a57', '#8c2f45'], ticks: 220 });
-    return () => fire.reset();
+    return goldLeaf(canvas, { amount: 0.6 });
   });
 
   async function submit(e) {
@@ -48,7 +47,7 @@
   }
 </script>
 
-<Modal {onclose} labelledby="review-title" size="md" variant={congrats ? 'celebrate' : 'default'}>
+<Modal {onclose} labelledby="review-title" size="md">
   {#snippet backdrop()}
     <canvas class="confetti" bind:this={canvas} aria-hidden="true"></canvas>
   {/snippet}
@@ -58,7 +57,7 @@
         <div class="mini-cover"><BookCover {book} shine={false} /></div>
         <div>
           {#if congrats}
-            <p class="congrats" in:fly={{ y: -8 }}><Icon name="sparkles" size={15} /> {t('review.congrats')}</p>
+            <p class="congrats" in:fly={{ y: -8 }}><Icon name="check" size={13} stroke={2} /> {t('review.congrats')}</p>
           {/if}
           <h2 id="review-title">{t('review.title', { title: book.title })}</h2>
         </div>
@@ -73,14 +72,13 @@
         <textarea bind:value={review} maxlength="4000" placeholder={t('review.placeholder')} rows="4" data-testid="review-text"></textarea>
       </label>
 
-      <p class="sealed"><Icon name="envelope" size={16} /> {t('review.sealed')}</p>
+      <p class="sealed"><WaxSeal size={30} /> {t('review.sealed')}</p>
 
       {#if error}<p class="form-error" role="alert">{error}</p>{/if}
 
       <div class="actions">
         <button type="button" class="btn btn-ghost" onclick={onclose}>{t('review.later')}</button>
         <button type="submit" class="btn btn-primary" disabled={busy || !rating} data-testid="review-submit">
-          <Icon name="check" size={17} stroke={2.6} />
           {t('review.submit')}
         </button>
       </div>
@@ -100,50 +98,53 @@
   .review {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
   }
   .head {
     display: grid;
-    grid-template-columns: 70px 1fr;
-    gap: 16px;
+    grid-template-columns: 72px 1fr;
+    gap: 18px;
     align-items: center;
     padding-right: 30px;
   }
   .mini-cover {
-    transform: rotate(-4deg);
+    transform: rotate(-3deg);
   }
   .congrats {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
     color: var(--green);
-    font-weight: 800;
-    font-size: 13.5px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
   h2 {
-    font-size: 24px;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1.08;
   }
   .stars-row {
     display: flex;
     justify-content: center;
-    padding: 6px 0;
+    padding: 8px 0 4px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
   }
   .sealed {
     display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    font-size: 13px;
+    gap: 12px;
+    align-items: center;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
     color: var(--ink-soft);
-    background: var(--card-2);
-    border: 1px dashed var(--line-strong);
-    padding: 10px 12px;
-    border-radius: 12px;
   }
   .sealed :global(svg) {
     flex: none;
-    margin-top: 1px;
-    color: var(--gold);
+    color: var(--oxblood);
   }
   .actions {
     display: flex;

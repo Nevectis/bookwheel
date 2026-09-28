@@ -1,23 +1,23 @@
 // The club's fixed genre list. Books store the `id`; the label is shown as-is in
 // every language because these are the names the club uses day to day.
 export const GENRES = [
-  { id: 'fantasy', label: 'Fantasy', color: '#5b4a9e' },
-  { id: 'romantasy', label: 'Romantasy', color: '#b2456e' },
-  { id: 'romance', label: 'Romance', color: '#d96a86' },
-  { id: 'dark-romance', label: 'Dark Romance', color: '#4d1a2c' },
-  { id: 'sci-fi', label: 'Sci-Fi', color: '#23708a' },
-  { id: 'historical-fiction', label: 'Historical Fiction', color: '#8a5a2b' },
-  { id: 'thriller-mystery', label: 'Thriller/Mystery', color: '#34445a' },
-  { id: 'horror', label: 'Horror', color: '#7c2418' },
-  { id: 'non-fiction', label: 'Non-Fiction', color: '#3f6f47' },
-  { id: 'young-adult', label: 'Young Adult', color: '#d27a24' },
+  { id: 'fantasy', label: 'Fantasy', color: '#4b416e' },
+  { id: 'romantasy', label: 'Romantasy', color: '#7a3c55' },
+  { id: 'romance', label: 'Romance', color: '#a65a63' },
+  { id: 'dark-romance', label: 'Dark Romance', color: '#3f1f2a' },
+  { id: 'sci-fi', label: 'Sci-Fi', color: '#2c4b5c' },
+  { id: 'historical-fiction', label: 'Historical Fiction', color: '#7a5432' },
+  { id: 'thriller-mystery', label: 'Thriller/Mystery', color: '#30363f' },
+  { id: 'horror', label: 'Horror', color: '#5f211d' },
+  { id: 'non-fiction', label: 'Non-Fiction', color: '#3e5b46' },
+  { id: 'young-adult', label: 'Young Adult', color: '#a86d3a' },
   {
     id: 'lgbtq',
     label: 'LGBTQ+',
-    color: '#7d4fb5',
-    gradient: 'linear-gradient(135deg,#e0474c 0%,#f0913a 20%,#e8c63a 40%,#4aa55b 60%,#3d7fd0 80%,#8a4fc0 100%)',
+    color: '#6a4f86',
+    gradient: 'linear-gradient(135deg,#a8545a 0%,#b27a48 20%,#ad9a52 40%,#5f8660 60%,#4d6c96 80%,#72578f 100%)',
   },
-  { id: 'literary-fiction', label: 'Literary Fiction', color: '#5d5a33' },
+  { id: 'literary-fiction', label: 'Literary Fiction', color: '#5a5a38' },
 ];
 
 const byId = new Map(GENRES.map((g) => [g.id, g]));

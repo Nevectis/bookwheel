@@ -10,6 +10,7 @@
   import CurrentBook from './components/CurrentBook.svelte';
   import Header from './components/Header.svelte';
   import Icon from './components/Icon.svelte';
+  import Mark from './components/Mark.svelte';
   import ProfileModal from './components/ProfileModal.svelte';
   import ProgressTicker from './components/ProgressTicker.svelte';
   import ReviewModal from './components/ReviewModal.svelte';
@@ -37,15 +38,11 @@
   });
 </script>
 
-<div class="ambient" aria-hidden="true">
-  <span class="blob b1"></span>
-  <span class="blob b2"></span>
-  <span class="blob b3"></span>
-</div>
+<div class="lamp" aria-hidden="true"></div>
 
 {#if club.phase === 'loading' || (club.phase === 'ready' && !club.dataReady)}
   <div class="loading" out:fade={{ duration: 250 }}>
-    <span class="loader" aria-hidden="true"></span>
+    <Mark size={64} spin />
     <p>{t('app.loading')}</p>
   </div>
 {:else if club.phase === 'signed-out'}
@@ -63,8 +60,7 @@
     <span id="top"></span>
     {#if club.mode === 'demo'}
       <div class="demo-banner">
-        <Icon name="sparkles" size={14} />
-        {t('demo.banner')}
+        <span>{t('demo.banner')}</span>
         <a href="https://github.com/nevectis/bookwheel#readme" target="_blank" rel="noopener">{t('demo.setup')} →</a>
       </div>
     {/if}
@@ -75,11 +71,14 @@
         <p class="eyebrow">{t(greetKey, { name: club.me?.name ?? '' })}</p>
         <h1 class="hero-title">
           {#if club.current}
-            {t('hero.titleReading')}
+            {t('hero.reading1')}<br /><em>{t('hero.reading2')}</em>
           {:else}
-            {t('hero.title')}
+            {t('hero.next1')}<br /><em>{t('hero.next2')}</em>
           {/if}
         </h1>
+        <p class="hero-stats">
+          {t('hero.stats', { members: club.members.length, shelf: club.shelf.length, read: club.picked.length })}
+        </p>
       </section>
 
       <div class="stage-grid">
@@ -89,14 +88,22 @@
 
       <div class="ticker-wrap" use:reveal={120}><ProgressTicker /></div>
 
+      <p class="fleuron" aria-hidden="true">❦</p>
       <Shelf />
+      <p class="fleuron" aria-hidden="true">❦</p>
       <Chronicle />
     </main>
 
-    <footer class="container foot">
-      <span class="fmark">Book<em>wheel</em></span>
-      <span>{club.meta?.name}</span>
-      <a href="#top" onclick={(e) => scrollToSection(e, 'top')} aria-label="↑"><Icon name="arrowUp" size={15} /></a>
+    <footer class="foot">
+      <div class="edge" aria-hidden="true"></div>
+      <div class="container foot-inner">
+        <a class="fbrand" href="#top" onclick={(e) => scrollToSection(e, 'top')}>
+          <Mark size={34} />
+          <span>Bookwheel</span>
+        </a>
+        <p class="colophon">{t('footer.colophon', { club: club.meta?.name ?? '' })}</p>
+        <a class="up" href="#top" onclick={(e) => scrollToSection(e, 'top')} aria-label="↑"><Icon name="arrowUp" size={15} stroke={1.6} /></a>
+      </div>
     </footer>
   </div>
 {/if}
@@ -122,52 +129,28 @@
 <Toasts />
 
 <style>
-  .ambient {
+  .lamp {
     position: fixed;
-    inset: 0;
+    inset: -20vh 0 auto;
+    height: 90vh;
     z-index: 0;
-    overflow: hidden;
     pointer-events: none;
+    background: radial-gradient(60% 55% at 50% 0%, var(--lamp), transparent 70%);
+    animation: flicker 9s ease-in-out infinite;
   }
-  .blob {
-    position: absolute;
-    width: 46vmax;
-    height: 46vmax;
-    border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0.9;
-  }
-  .b1 {
-    background: radial-gradient(closest-side, var(--glow-1), transparent);
-    top: -18vmax;
-    left: -12vmax;
-    animation: drift1 38s ease-in-out infinite alternate;
-  }
-  .b2 {
-    background: radial-gradient(closest-side, var(--glow-2), transparent);
-    top: 30vh;
-    right: -20vmax;
-    animation: drift2 44s ease-in-out infinite alternate;
-  }
-  .b3 {
-    background: radial-gradient(closest-side, var(--glow-3), transparent);
-    bottom: -24vmax;
-    left: 20vw;
-    animation: drift3 52s ease-in-out infinite alternate;
-  }
-  @keyframes drift1 {
-    to {
-      transform: translate(18vw, 22vh) scale(1.2);
+  @keyframes flicker {
+    0%,
+    100% {
+      opacity: 1;
     }
-  }
-  @keyframes drift2 {
-    to {
-      transform: translate(-22vw, -12vh) scale(0.85);
+    30% {
+      opacity: 0.86;
     }
-  }
-  @keyframes drift3 {
-    to {
-      transform: translate(-14vw, -20vh) scale(1.15);
+    34% {
+      opacity: 0.95;
+    }
+    62% {
+      opacity: 0.9;
     }
   }
   .app {
@@ -180,23 +163,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 14px;
     flex-wrap: wrap;
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #2a1d08;
-    background: linear-gradient(90deg, #e2b85e, #f3d58e, #e2b85e);
-    background-size: 200% 100%;
-    animation: shimmer 8s linear infinite;
+    padding: 7px 16px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--gold-soft) 55%, var(--paper));
   }
   .demo-banner a {
-    color: #6b1f33;
-  }
-  @keyframes shimmer {
-    to {
-      background-position: -200% 0;
-    }
+    color: var(--ink);
+    text-decoration-color: var(--gold);
   }
   .loading {
     position: fixed;
@@ -205,94 +185,128 @@
     display: grid;
     place-content: center;
     justify-items: center;
-    gap: 16px;
+    gap: 18px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 20px;
     color: var(--ink-soft);
     text-align: center;
     padding: 20px;
   }
-  .loader {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: conic-gradient(#8c2f45 0 60deg, #c1902f 0 120deg, #2f6f73 0 180deg, #b4533c 0 240deg, #5b4a9e 0 300deg, #3f7a57 0);
-    box-shadow:
-      0 0 0 5px #c1902f,
-      0 10px 24px -8px rgba(0, 0, 0, 0.4);
-    animation: load-spin 1.1s cubic-bezier(0.5, 0.1, 0.3, 1) infinite;
-  }
-  @keyframes load-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
   .err {
     font-family: var(--font-display);
-    font-size: 22px;
+    font-size: 24px;
     color: var(--ink);
   }
   main {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: clamp(56px, 9vw, 110px);
-    padding-bottom: 60px;
+    gap: clamp(56px, 8vw, 96px);
+    padding-bottom: 80px;
   }
   .hero {
-    padding-top: clamp(22px, 5vw, 48px);
-    margin-bottom: calc(-1 * clamp(30px, 6vw, 70px));
+    padding-top: clamp(30px, 6vw, 70px);
+    margin-bottom: calc(-1 * clamp(20px, 4vw, 48px));
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   .hero-title {
-    font-size: clamp(38px, 7vw, 76px);
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    line-height: 1;
-    margin-top: 10px;
-    max-width: 16ch;
-    font-variation-settings: 'SOFT' 100, 'WONK' 1;
+    font-size: clamp(46px, 8vw, 96px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    margin-top: 18px;
+  }
+  .hero-title em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--oxblood);
+  }
+  .hero-stats {
+    margin-top: 22px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .hero-stats::before,
+  .hero-stats::after {
+    content: '';
+    width: 36px;
+    height: 1px;
+    background: var(--line-strong);
+  }
+  .fleuron {
+    margin: calc(-1 * clamp(20px, 4vw, 44px)) auto;
+    width: min(420px, 70%);
   }
   .stage-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-    gap: clamp(18px, 3vw, 28px);
+    gap: clamp(18px, 3vw, 30px);
     align-items: stretch;
-  }
-  .ticker-wrap {
-    margin-top: calc(-1 * clamp(30px, 6vw, 80px));
-  }
-  .foot {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding-top: 26px;
-    padding-bottom: 40px;
-    border-top: 1px solid var(--line);
-    color: var(--ink-soft);
-    font-size: 14px;
-  }
-  .fmark {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 18px;
-    color: var(--ink);
-  }
-  .fmark em {
-    color: var(--accent);
-  }
-  .foot a {
-    margin-left: auto;
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    color: var(--ink-soft);
   }
   .col-wheel,
   .col-current {
     min-width: 0;
+  }
+  .ticker-wrap {
+    margin-top: calc(-1 * clamp(24px, 5vw, 60px));
+  }
+  .foot {
+    position: relative;
+    z-index: 2;
+    margin-top: 40px;
+  }
+  /* marbled page edges */
+  .edge {
+    height: 12px;
+    background: url('/textures/marble.jpg') center / 900px auto repeat-x;
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line-strong);
+    opacity: 0.9;
+  }
+  .foot-inner {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding-top: 28px;
+    padding-bottom: 44px;
+    color: var(--ink-soft);
+  }
+  .fbrand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 22px;
+    flex: none;
+  }
+  .colophon {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
+    max-width: 60ch;
+  }
+  .up {
+    margin-left: auto;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-soft);
   }
   @media (max-width: 1000px) {
     .stage-grid {
@@ -303,8 +317,23 @@
     }
   }
   @media (max-width: 760px) {
-    .foot {
-      padding-bottom: 110px;
+    .foot-inner {
+      flex-wrap: wrap;
+      padding-bottom: 120px;
+    }
+    .hero-stats {
+      flex-wrap: wrap;
+      justify-content: center;
+      text-align: center;
+      font-size: 17px;
+    }
+    .hero-stats::before,
+    .hero-stats::after {
+      display: none;
+    }
+    .demo-banner {
+      letter-spacing: 0.1em;
+      gap: 4px 10px;
     }
   }
 </style>

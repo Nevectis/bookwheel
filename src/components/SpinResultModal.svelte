@@ -1,8 +1,8 @@
 <script>
   import { onMount } from 'svelte';
   import { fly } from 'svelte/transition';
-  import { backOut } from 'svelte/easing';
-  import confetti from 'canvas-confetti';
+  import { cubicOut } from 'svelte/easing';
+  import { goldLeaf } from '../lib/goldleaf.js';
   import Modal from './Modal.svelte';
   import BookCover from './BookCover.svelte';
   import Icon from './Icon.svelte';
@@ -30,17 +30,7 @@
 
   onMount(() => {
     if (prefersReducedMotion() || !canvas) return;
-    const fire = confetti.create(canvas, { resize: true, useWorker: false });
-    const colors = ['#8c2f45', '#c1902f', '#f3d58e', '#2f6f73', '#b3475f', '#fff4dc'];
-    const burst = (x, angle) =>
-      fire({ particleCount: 90, spread: 70, startVelocity: 55, angle, origin: { x, y: 0.75 }, colors, scalar: 1.05, ticks: 260 });
-    burst(0.1, 60);
-    burst(0.9, 120);
-    const t2 = setTimeout(() => fire({ particleCount: 140, spread: 120, startVelocity: 38, origin: { x: 0.5, y: 0.35 }, colors, shapes: ['star', 'circle'], ticks: 300 }), 350);
-    return () => {
-      clearTimeout(t2);
-      fire.reset();
-    };
+    return goldLeaf(canvas);
   });
 
   async function undo() {
@@ -54,49 +44,50 @@
   }
 </script>
 
-<Modal {onclose} labelledby="result-title" variant="celebrate">
+<Modal {onclose} labelledby="result-title" size="lg" variant="bare">
   {#snippet backdrop()}
     <canvas class="confetti" bind:this={canvas} aria-hidden="true"></canvas>
   {/snippet}
   {#if book}
-    <div class="result" data-testid="spin-result">
-      <p class="eyebrow">
-        <Icon name="sparkles" size={14} />
-        {byName ? t('result.byOther', { name: byName }) : t('result.eyebrow')}
-      </p>
-      <div class="cover-stage">
-        <div class="rays" aria-hidden="true"></div>
+    <div class="plate" data-testid="spin-result">
+      <div class="endpaper" aria-hidden="true">
         <div class="flip">
           <BookCover {book} />
         </div>
       </div>
-      <h2 id="result-title" class="title" in:fly={{ y: 16, delay: 450, duration: 600, easing: backOut }}>{book.title}</h2>
-      <p class="author" in:fly={{ y: 12, delay: 560, duration: 600 }}>{book.author}</p>
-      <div class="meta" in:fly={{ y: 10, delay: 660, duration: 600 }}>
-        <span class="chip genre" style:--gc={genreSwatch(book.genre)}><span class="dot" style:background={genreSwatch(book.genre)}></span>{genre.label}</span>
-        {#if book.pageCount}<span class="chip">{t('result.pages', { n: book.pageCount })}</span>{/if}
-      </div>
+      <div class="leaf">
+        <p class="eyebrow">{byName ? t('result.byOther', { name: byName }) : t('result.eyebrow')}</p>
+        <div class="exlibris" in:fly={{ y: 10, delay: 300, duration: 700, easing: cubicOut }}>
+          <span class="ex">Ex Libris</span>
+          <span class="club">{club.meta?.name ?? 'Bookwheel'}</span>
+        </div>
+        <h2 id="result-title" class="title" in:fly={{ y: 14, delay: 480, duration: 800, easing: cubicOut }}>{book.title}</h2>
+        <p class="author" in:fly={{ y: 10, delay: 580, duration: 800, easing: cubicOut }}>{t('current.by', { author: book.author })}</p>
+        <p class="meta" in:fly={{ y: 8, delay: 680, duration: 800, easing: cubicOut }}>
+          <span class="genre"><span class="dot" style:background={genreSwatch(book.genre)}></span>{genre.label}</span>
+          {#if book.pageCount}<span class="sep">·</span><span>{t('result.pages', { n: book.pageCount })}</span>{/if}
+        </p>
 
-      <label class="month" in:fly={{ y: 10, delay: 760, duration: 600 }}>
-        <span><Icon name="calendar" size={16} /> {t('result.month')}</span>
-        <select value={book.month} onchange={(e) => club.setMonth(book, e.currentTarget.value)} data-testid="result-month">
-          {#each months as m}
-            <option value={m}>{monthLabel(m, locale())}</option>
-          {/each}
-        </select>
-      </label>
+        <label class="month" in:fly={{ y: 8, delay: 780, duration: 800, easing: cubicOut }}>
+          <span>{t('result.month')}</span>
+          <select value={book.month} onchange={(e) => club.setMonth(book, e.currentTarget.value)} data-testid="result-month">
+            {#each months as m}
+              <option value={m}>{monthLabel(m, locale())}</option>
+            {/each}
+          </select>
+        </label>
 
-      <div class="actions" in:fly={{ y: 10, delay: 860, duration: 600 }}>
-        <button class="btn btn-primary big" type="button" onclick={onclose} data-testid="result-start">
-          <Icon name="book" size={18} />
-          {t('result.start')}
-        </button>
-        {#if !byName}
-          <button class="btn btn-ghost" type="button" onclick={undo} disabled={undoing}>
-            <Icon name="undo" size={16} />
-            {t('result.undo')}
+        <div class="actions" in:fly={{ y: 8, delay: 880, duration: 800, easing: cubicOut }}>
+          <button class="btn btn-primary big" type="button" onclick={onclose} data-testid="result-start">
+            {t('result.start')}
           </button>
-        {/if}
+          {#if !byName}
+            <button class="btn btn-ghost" type="button" onclick={undo} disabled={undoing}>
+              <Icon name="undo" size={15} stroke={1.6} />
+              {t('result.undo')}
+            </button>
+          {/if}
+        </div>
       </div>
     </div>
   {/if}
@@ -111,122 +102,173 @@
     pointer-events: none;
     z-index: 101;
   }
-  .result {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .plate {
+    display: grid;
+    grid-template-columns: 0.82fr 1fr;
+    min-height: 460px;
   }
-  .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--accent);
-  }
-  .cover-stage {
+  /* marbled endpaper with the book lying on it */
+  .endpaper {
     position: relative;
-    width: 180px;
-    margin: 22px 0 22px;
-    perspective: 1000px;
-  }
-  .rays {
-    position: absolute;
-    inset: -70%;
-    background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--gold) 35%, transparent) 0 8deg, transparent 8deg 22deg);
-    mask-image: radial-gradient(closest-side, #000 20%, transparent 75%);
-    animation: rays 14s linear infinite;
-    opacity: 0.7;
-  }
-  @keyframes rays {
-    to {
-      transform: rotate(360deg);
-    }
+    display: grid;
+    place-items: center;
+    padding: 40px 30px;
+    background: url('/textures/marble.jpg') center / cover;
+    box-shadow:
+      inset -14px 0 22px -12px rgba(30, 18, 8, 0.5),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    perspective: 1100px;
   }
   .flip {
-    position: relative;
-    animation: flip-in 1s var(--ease-out) both;
-    transform-style: preserve-3d;
+    width: min(190px, 70%);
+    transform: rotate(-3deg);
+    animation: open 1.2s var(--ease-out) both;
+    transform-origin: 0% 50%;
   }
   .flip :global(.cover) {
     box-shadow:
-      0 2px 3px rgba(0, 0, 0, 0.2),
-      0 30px 50px -18px rgba(50, 20, 5, 0.65);
+      0 2px 3px rgba(0, 0, 0, 0.3),
+      0 28px 40px -14px rgba(20, 10, 4, 0.75);
   }
-  @keyframes flip-in {
+  @keyframes open {
     0% {
-      transform: rotateY(-110deg) scale(0.5) translateY(40px);
+      transform: rotate(-3deg) rotateY(-85deg) translateX(-20px);
       opacity: 0;
     }
-    55% {
+    40% {
       opacity: 1;
     }
-    75% {
-      transform: rotateY(12deg) scale(1.06);
-    }
     100% {
-      transform: none;
+      transform: rotate(-3deg) rotateY(0) translateX(0);
     }
   }
+  .leaf {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 44px 40px 36px;
+  }
+  .leaf::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    pointer-events: none;
+  }
+  .leaf .eyebrow {
+    color: var(--oxblood);
+  }
+  /* the bookplate label */
+  .exlibris {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin: 18px 0 20px;
+    padding: 10px 26px 12px;
+    border: 1px solid var(--gold);
+    outline: 1px solid color-mix(in srgb, var(--gold) 50%, transparent);
+    outline-offset: 3px;
+  }
+  .ex {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--gold);
+  }
+  .club {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
   .title {
-    font-size: clamp(28px, 5vw, 38px);
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-size: clamp(32px, 5vw, 46px);
+    font-weight: 600;
+    line-height: 1;
   }
   .author {
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 19px;
+    font-size: 21px;
     color: var(--ink-soft);
-    margin-top: 6px;
+    margin-top: 8px;
   }
   .meta {
     display: flex;
+    align-items: center;
     gap: 8px;
     margin-top: 14px;
-    flex-wrap: wrap;
-    justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
   }
-  .chip.genre {
-    background: var(--gc);
-    color: #fff;
-    border-color: transparent;
-    font-size: 13px;
-    padding: 5px 12px 5px 10px;
+  .genre {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
-  .chip.genre .dot {
-    background: #fff !important;
+  .sep {
+    color: var(--gold);
   }
   .month {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 20px;
-    font-weight: 700;
-    font-size: 14px;
+    margin-top: 22px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 18px;
     color: var(--ink-soft);
-  }
-  .month span {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
   }
   .month select {
     width: auto;
-    padding: 7px 12px;
-    font-weight: 700;
+    padding: 5px 30px 5px 10px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    font-style: normal;
   }
   .actions {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    margin-top: 22px;
+    margin-top: 24px;
     width: 100%;
   }
   .big {
     min-height: 50px;
-    padding: 12px 30px;
-    font-size: 16px;
-    width: min(280px, 100%);
+    width: min(260px, 100%);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: 0.01em;
+  }
+  @media (max-width: 640px) {
+    .plate {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+    .endpaper {
+      padding: 28px 20px 24px;
+      box-shadow: inset 0 -14px 22px -12px rgba(30, 18, 8, 0.5);
+    }
+    .flip {
+      width: 124px;
+    }
+    .leaf {
+      padding: 28px 24px calc(28px + env(safe-area-inset-bottom, 0px));
+    }
   }
 </style>

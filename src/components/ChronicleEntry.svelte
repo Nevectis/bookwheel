@@ -1,11 +1,12 @@
 <script>
   import { slide, fly, scale } from 'svelte/transition';
-  import { backOut } from 'svelte/easing';
+  import { cubicOut } from 'svelte/easing';
   import Avatar from './Avatar.svelte';
   import BookCover from './BookCover.svelte';
   import Icon from './Icon.svelte';
   import Menu from './Menu.svelte';
   import Stars from './Stars.svelte';
+  import WaxSeal from './WaxSeal.svelte';
   import { club } from '../lib/store.svelte.js';
   import { t, locale, listNames, formatAverage } from '../lib/i18n.svelte.js';
   import { genreById, genreSwatch } from '../lib/genres.js';
@@ -43,14 +44,14 @@
     <div class="c-top">
       <div class="c-titles">
         {#if isCurrent}
-          <span class="now-badge"><span class="pulse"></span>{t('chron.current')}</span>
+          <span class="now-badge">{t('chron.current')}</span>
         {/if}
         <h3>{book.title}</h3>
         <p class="author">{book.author}</p>
       </div>
       <Menu label="…" testid="entry-menu">
         {#snippet trigger()}
-          <span class="btn btn-ghost btn-icon btn-sm"><Icon name="more" size={18} /></span>
+          <span class="btn btn-ghost btn-icon btn-sm"><Icon name="more" size={18} stroke={1.6} /></span>
         {/snippet}
         {#snippet children(close)}
           {#if !isCurrent}
@@ -65,7 +66,7 @@
     </div>
 
     <div class="c-meta">
-      <span class="chip"><span class="dot" style:background={genreSwatch(book.genre)}></span>{genreById(book.genre).label}</span>
+      <span class="genre"><span class="dot" style:background={genreSwatch(book.genre)}></span>{genreById(book.genre).label}</span>
       <span class="picked">{t('chron.pickedBy', { name: club.nameOf(book.pickedBy, book.pickedByName) })}</span>
     </div>
 
@@ -89,21 +90,23 @@
 
     <div class="rating">
       {#if s.complete}
-        <div class="avg" in:scale={{ start: 0.8, duration: 600, easing: backOut }} data-testid="avg-rating">
-          <Stars value={s.average} size={24} animate label={t('chron.avg', { value: formatAverage(s.average) })} />
+        <div class="avg" in:scale={{ start: 0.9, duration: 700, easing: cubicOut }} data-testid="avg-rating">
           <span class="avg-num">{formatAverage(s.average)}</span>
-          <span class="avg-of">{t('chron.avg', { value: formatAverage(s.average) })} · {t('chron.votes', { n: s.ratedCount, m: s.expectedCount })}</span>
+          <div class="avg-side">
+            <Stars value={s.average} size={20} animate label={t('chron.avg', { value: formatAverage(s.average) })} />
+            <span class="avg-of">{t('chron.avg', { value: formatAverage(s.average) })} · {t('chron.votes', { n: s.ratedCount, m: s.expectedCount })}</span>
+          </div>
         </div>
       {:else}
         <div class="sealed">
-          <span class="env" aria-hidden="true"><Icon name="envelope" size={18} /></span>
+          <WaxSeal size={48} />
           <div class="sealed-text">
             <p class="votes">{t('chron.votes', { n: s.ratedCount, m: s.expectedCount })}</p>
             <div class="voters">
               {#each club.sortedMembers.filter((m) => ratedIds.has(m.id) || s.pending.some((p) => p.id === m.id)) as m (m.id)}
                 <span class="voter" class:done={ratedIds.has(m.id)} title={m.name}>
                   <Avatar member={m} size={24} />
-                  {#if ratedIds.has(m.id)}<span class="tick"><Icon name="check" size={9} stroke={4} /></span>{/if}
+                  {#if ratedIds.has(m.id)}<span class="tick"><Icon name="check" size={9} stroke={3.4} /></span>{/if}
                 </span>
               {/each}
             </div>
@@ -119,19 +122,19 @@
       {#if mine?.rating}
         <span class="my-rating"><Stars value={mine.rating} size={15} label={t('review.star', { n: mine.rating })} /></span>
         <button class="btn btn-ghost btn-sm" type="button" onclick={() => (ui.review = { bookId: book.id })}>
-          <Icon name="edit" size={14} />{t('chron.editRating')}
+          <Icon name="edit" size={14} stroke={1.6} />{t('chron.editRating')}
         </button>
       {:else}
         <button class="btn btn-gold btn-sm" type="button" onclick={() => (ui.review = { bookId: book.id })} data-testid="chron-rate">
-          <Icon name="sparkles" size={15} />{t('chron.rate')}
+          <Icon name="sparkles" size={14} stroke={1.6} />{t('chron.rate')}
         </button>
       {/if}
       {#if s.complete && reviews.length}
         <button class="btn btn-ghost btn-sm" type="button" onclick={() => (open = !open)} aria-expanded={open}>
-          <Icon name={open ? 'eye' : 'eye'} size={15} />{open ? t('chron.hideReviews') : t('chron.showReviews')}
+          <Icon name="book" size={14} stroke={1.6} />{open ? t('chron.hideReviews') : t('chron.showReviews')}
         </button>
       {:else if !s.complete && s.ratedCount}
-        <span class="hint"><Icon name="lock" size={13} /> {t('chron.sealed')}</span>
+        <span class="hint">{t('chron.sealed')}</span>
       {/if}
     </div>
 
@@ -139,11 +142,8 @@
       <ul class="reviews" transition:slide={{ duration: 320 }}>
         {#each reviews as r, i (r.uid)}
           <li in:fly={{ y: 10, delay: 60 * i }}>
-            <Avatar member={r.member} size={30} />
-            <div>
-              <p class="r-head"><strong>{r.member.name}</strong> <Stars value={r.rating} size={13} /></p>
-              <p class="r-text" class:muted={!r.review}>{r.review || t('chron.noText')}</p>
-            </div>
+            <p class="r-text" class:muted={!r.review}>{r.review || t('chron.noText')}</p>
+            <p class="r-head"><Avatar member={r.member} size={22} /><strong>{r.member.name}</strong> <Stars value={r.rating} size={12} /></p>
           </li>
         {/each}
       </ul>
@@ -155,22 +155,26 @@
   .entry {
     position: relative;
     display: grid;
-    grid-template-columns: 96px 1fr;
-    gap: 18px;
-    padding: 18px;
-    border-radius: 22px;
+    grid-template-columns: 100px 1fr;
+    gap: 22px;
+    padding: 22px 22px 20px;
+    border-radius: 10px;
     background: var(--card);
     border: 1px solid var(--line);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
   }
-  .entry.current {
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-    box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--accent-soft) 70%, transparent),
-      var(--shadow-md);
+  .entry.current::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: 26px;
+    width: 12px;
+    height: 44px;
+    background: linear-gradient(90deg, #4f161e, #7b2a33 40%, #9c3f49 52%, #7b2a33 64%, #4a141c);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 7px), 0 100%);
   }
   .c-cover {
-    border-radius: 6px;
+    border-radius: 4px;
     align-self: start;
   }
   .c-body {
@@ -181,51 +185,53 @@
     justify-content: space-between;
     gap: 10px;
     align-items: flex-start;
+    padding-right: 24px;
   }
   .c-titles {
     min-width: 0;
   }
   h3 {
-    font-size: 21px;
-    font-weight: 700;
+    font-size: 27px;
+    font-weight: 600;
+    line-height: 1.05;
   }
   .author {
     font-family: var(--font-display);
     font-style: italic;
+    font-size: 18px;
     color: var(--ink-soft);
+    margin-top: 2px;
   }
   .now-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    font-weight: 800;
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-    margin-bottom: 4px;
-  }
-  .pulse {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: blink 1.4s ease-in-out infinite;
-  }
-  @keyframes blink {
-    50% {
-      opacity: 0.25;
-    }
+    letter-spacing: 0.2em;
+    color: var(--oxblood);
+    margin-bottom: 6px;
   }
   .c-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px 16px;
     align-items: center;
-    margin-top: 8px;
+    margin-top: 10px;
+  }
+  .genre {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
   }
   .picked {
-    font-size: 12.5px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 15.5px;
     color: var(--ink-faint);
   }
   .month-edit {
@@ -239,73 +245,57 @@
     padding: 6px 10px;
   }
   .rating {
-    margin-top: 14px;
+    margin-top: 16px;
   }
   .avg {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 6px 12px;
+    gap: 16px;
   }
   .avg-num {
     font-family: var(--font-display);
-    font-size: 30px;
-    font-weight: 800;
-    line-height: 1;
-    color: color-mix(in srgb, var(--gold) 75%, var(--ink));
+    font-size: 54px;
+    font-weight: 500;
+    line-height: 0.8;
+    color: var(--ink);
+    font-variant-numeric: oldstyle-nums;
+  }
+  .avg-side {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
   .avg-of {
-    font-size: 12.5px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     color: var(--ink-soft);
-    width: 100%;
   }
   .sealed {
     display: flex;
-    gap: 12px;
-    padding: 12px;
-    border-radius: 14px;
-    background: repeating-linear-gradient(-45deg, transparent 0 10px, color-mix(in srgb, var(--gold-soft) 45%, transparent) 10px 20px), var(--card-2);
+    gap: 14px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 8px;
     border: 1px dashed var(--line-strong);
-  }
-  .env {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
-    background: var(--card);
-    color: var(--gold);
-    flex: none;
-    box-shadow: var(--shadow-sm);
-    animation: wiggle 4s ease-in-out infinite;
-  }
-  @keyframes wiggle {
-    0%,
-    86%,
-    100% {
-      transform: rotate(0);
-    }
-    90% {
-      transform: rotate(-9deg);
-    }
-    95% {
-      transform: rotate(7deg);
-    }
+    background: color-mix(in srgb, var(--paper) 60%, var(--card));
   }
   .votes {
-    font-weight: 800;
-    font-size: 14px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 19px;
   }
   .voters {
     display: flex;
-    gap: 4px;
+    gap: 5px;
     margin: 6px 0 4px;
     flex-wrap: wrap;
   }
   .voter {
     position: relative;
     opacity: 0.4;
-    filter: grayscale(0.7);
+    filter: grayscale(0.8);
     transition:
       opacity 0.3s,
       filter 0.3s;
@@ -318,72 +308,114 @@
     position: absolute;
     right: -3px;
     bottom: -3px;
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
     border-radius: 50%;
     background: var(--green);
-    color: #fff;
+    color: var(--card);
     display: grid;
     place-items: center;
     box-shadow: 0 0 0 2px var(--card);
   }
   .waiting {
-    font-size: 12.5px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
     color: var(--ink-soft);
   }
   .c-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
-    margin-top: 14px;
+    gap: 8px 12px;
+    margin-top: 16px;
   }
   .my-rating {
     display: inline-flex;
   }
   .hint {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 12.5px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 15px;
     color: var(--ink-faint);
   }
   .reviews {
     list-style: none;
-    margin: 14px 0 0;
-    padding: 14px 0 0;
-    border-top: 1px dashed var(--line);
+    margin: 18px 0 0;
+    padding: 18px 0 0;
+    border-top: 1px solid var(--line);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
   }
   .reviews li {
-    display: flex;
-    gap: 10px;
+    padding-left: 16px;
+    border-left: 2px solid var(--gold-2);
+  }
+  .r-text {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.4;
+  }
+  .r-text {
+    quotes: auto;
+  }
+  .r-text::before {
+    content: open-quote;
+  }
+  .r-text::after {
+    content: close-quote;
+  }
+  .r-text.muted::before,
+  .r-text.muted::after {
+    content: none;
+  }
+  .r-text.muted {
+    color: var(--ink-faint);
+    font-size: 16px;
   }
   .r-head {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    margin-top: 6px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
   }
-  .r-text {
-    font-size: 14.5px;
-    line-height: 1.5;
-    margin-top: 2px;
+  .r-head strong {
+    font-weight: 500;
   }
-  .r-text.muted {
-    color: var(--ink-faint);
-    font-style: italic;
-  }
-  @media (max-width: 520px) {
+  @media (max-width: 560px) {
     .entry {
-      grid-template-columns: 72px 1fr;
-      gap: 14px;
-      padding: 14px;
+      grid-template-columns: 66px 1fr;
+      gap: 6px 14px;
+      padding: 16px;
+    }
+    /* cover + titles share the first row; the rest spans the card */
+    .c-body {
+      display: contents;
+    }
+    .c-cover {
+      grid-row: 1 / span 2;
+    }
+    .c-top,
+    .c-meta {
+      grid-column: 2;
+    }
+    .month-edit,
+    .rating,
+    .c-actions,
+    .reviews {
+      grid-column: 1 / -1;
     }
     h3 {
-      font-size: 18px;
+      font-size: 22px;
+    }
+    .avg-num {
+      font-size: 44px;
     }
   }
 </style>

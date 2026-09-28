@@ -1,7 +1,9 @@
 <script>
-  // The spinning wheel. Slices show title + author only. When the set of books
-  // changes, slices grow/shrink smoothly instead of jumping. `spin(id)` plays
-  // the full animation and resolves once the wheel has stopped on that book.
+  // The wheel, drawn as a volvelle — the rotating paper disc found in old
+  // books. A fixed printed dial, a turning disc of book-cloth segments (title
+  // and author only), a brass rivet and a silk ribbon as the pointer.
+  // Slices grow/shrink smoothly when books come and go; `spin(id)` plays the
+  // full animation and resolves once the wheel has stopped on that book.
   import { untrack } from 'svelte';
   import {
     easeInOutCubic,
@@ -26,18 +28,21 @@
     onhub,
     hubLabel = '',
     emptyText = '',
+    ringText = 'Bookwheel',
   } = $props();
 
-  const R = 236;
-  const HUB = 46;
-  const TEXT_LEN = R - HUB - 34;
-  const COLORS = ['#8c2f45', '#c1902f', '#2f6f73', '#b4533c', '#5b4a9e', '#3f7a57', '#d27a24', '#34445a', '#b2456e', '#7a6a2e'];
-  const BULBS = 28;
+  const R = 222; // turning disc
+  const HUB = 62; // centre label
+  const TEXT_OUT = R - 17;
+  const TEXT_LEN = TEXT_OUT - HUB - 10;
+  // Book-cloth colours: muted, and all dark enough for ivory lettering.
+  const CLOTH = ['#6f2a32', '#2d4a3e', '#2b3a55', '#86673a', '#4a3552', '#3d5a5c', '#77462b', '#4f5638', '#86505a', '#3a332e'];
+  const NUMERALS = ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
 
   let rotation = $state(0);
   let entries = $state([]);
   let pop = $state(0);
-  let pointerEl = $state();
+  let ribbonEl = $state();
   let tweenRaf = 0;
   let spinRaf = 0;
 
@@ -91,60 +96,82 @@
     const out = [];
     const n = entries.length;
     entries.forEach((e, i) => {
-      let c = hash(String(e.id)) % COLORS.length;
+      let c = hash(String(e.id)) % CLOTH.length;
       const avoid = new Set([out[i - 1]]);
       if (i === n - 1 && n > 2) avoid.add(out[0]);
-      while (avoid.has(c)) c = (c + 1) % COLORS.length;
+      while (avoid.has(c)) c = (c + 1) % CLOTH.length;
       out.push(c);
     });
-    return out.map((c) => COLORS[c]);
+    return out.map((c) => CLOTH[c]);
   });
-
-  function inkOn(hex) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.56 ? '#2a1a0e' : '#fff8ee';
-  }
 
   const slices = $derived.by(() => {
     const angles = segmentAngles(entries.map((e) => e.weight));
     return entries
       .map((e, i) => {
         const a = angles[i];
-        const fs = labelFontSize(a.span, R, { min: 7.5, max: 17 });
-        const twoLines = ((a.span * Math.PI) / 180) * R * 0.62 >= fs * 2.35;
+        const fs = labelFontSize(a.span, (R + HUB) / 1.7, { min: 8, max: 17.5 });
+        const twoLines = ((a.span * Math.PI) / 180) * (R * 0.66) >= fs * 2.2;
         return {
           id: e.id,
           ...a,
           color: colors[i],
-          ink: inkOn(colors[i]),
           fs,
           twoLines,
-          title: fitText(e.item?.title, fs, TEXT_LEN, 0.56),
-          author: fitText(e.item?.author, fs * 0.78, TEXT_LEN, 0.5),
+          full: `${e.item?.title ?? ''} — ${e.item?.author ?? ''}`,
+          title: fitText(e.item?.title, fs, TEXT_LEN, 0.43),
+          author: fitText((e.item?.author ?? '').toUpperCase(), fs * 0.52, TEXT_LEN, 0.74),
         };
       })
       .filter((s) => s.span > 0.05);
   });
 
-  function arcPath(start, end, r) {
-    if (end - start >= 359.99) return `M0 ${-r}A${r} ${r} 0 1 1 0 ${r}A${r} ${r} 0 1 1 0 ${-r}Z`;
-    const a0 = ((start - 90) * Math.PI) / 180;
-    const a1 = ((end - 90) * Math.PI) / 180;
+  function arcPath(start, end, r, r0 = 0) {
+    if (end - start >= 359.99) {
+      const outer = `M0 ${-r}A${r} ${r} 0 1 1 0 ${r}A${r} ${r} 0 1 1 0 ${-r}Z`;
+      return r0 ? `${outer}M0 ${-r0}A${r0} ${r0} 0 1 0 0 ${r0}A${r0} ${r0} 0 1 0 0 ${-r0}Z` : outer;
+    }
+    const [x0, y0] = polar(start, r);
+    const [x1, y1] = polar(end, r);
     const large = end - start > 180 ? 1 : 0;
-    return `M0 0L${(r * Math.cos(a0)).toFixed(2)} ${(r * Math.sin(a0)).toFixed(2)}A${r} ${r} 0 ${large} 1 ${(r * Math.cos(a1)).toFixed(2)} ${(r * Math.sin(a1)).toFixed(2)}Z`;
+    if (!r0) return `M0 0L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z`;
+    const [x2, y2] = polar(end, r0);
+    const [x3, y3] = polar(start, r0);
+    return `M${x3.toFixed(2)} ${y3.toFixed(2)}L${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}L${x2.toFixed(2)} ${y2.toFixed(2)}A${r0} ${r0} 0 ${large} 0 ${x3.toFixed(2)} ${y3.toFixed(2)}Z`;
   }
-  const polar = (deg, r) => {
+  function polar(deg, r) {
     const a = ((deg - 90) * Math.PI) / 180;
     return [r * Math.cos(a), r * Math.sin(a)];
-  };
+  }
+
+  // Printed dial: fine ticks every 2°, longer every 10°, numerals every 30°.
+  const ticks = [];
+  for (let d = 0; d < 360; d += 2) {
+    if (d % 30 === 0) continue;
+    const long = d % 10 === 0;
+    const [x0, y0] = polar(d, 247);
+    const [x1, y1] = polar(d, long ? 238 : 242.5);
+    ticks.push({ x0, y0, x1, y1, long });
+  }
+  const numerals = NUMERALS.map((n, i) => {
+    const [x, y] = polar(i * 30, 236.5);
+    return { n, x, y, rot: i * 30 };
+  });
+
+  const RING_R = 51;
+  const ring = $derived.by(() => {
+    const word = String(ringText).toUpperCase().slice(0, 40);
+    const circumference = 2 * Math.PI * RING_R;
+    const unit = (word.length + 5) * 7.2;
+    const reps = Math.max(1, Math.round(circumference / unit));
+    return Array(reps).fill(word).join('  ·  ') + '  ·  ';
+  });
 
   function flick(strength) {
     const s = Number.isFinite(strength) ? Math.max(0, Math.min(1, strength)) : 0.5;
-    pointerEl?.animate?.(
-      [{ transform: `rotate(${-10 - 16 * s}deg)` }, { transform: 'rotate(0deg)' }],
-      { duration: 160 + 120 * (1 - s), easing: 'cubic-bezier(.3,1.7,.5,1)' },
+    ribbonEl?.animate?.(
+      [{ transform: 'rotate(0deg)' }, { transform: `rotate(${-3 - 7 * s}deg)` }, { transform: 'rotate(0deg)' }],
+      { duration: 240 + 160 * (1 - s), easing: 'cubic-bezier(.25,.6,.3,1)' },
     );
   }
 
@@ -160,12 +187,12 @@
     const reduced = prefersReducedMotion();
     const from = rotation;
     const to = landingRotation(from, angles[idx], {
-      turns: reduced ? 1 : 5 + Math.floor(Math.random() * 3),
-      offset: (Math.random() - 0.5) * 0.8,
+      turns: reduced ? 1 : 4 + Math.floor(Math.random() * 3),
+      offset: (Math.random() - 0.5) * 0.7,
     });
-    const windup = reduced ? 0 : 450;
-    const back = reduced ? 0 : 16;
-    const duration = reduced ? 1100 : 5400 + Math.random() * 1500;
+    const windup = reduced ? 0 : 520;
+    const back = reduced ? 0 : 9;
+    const duration = reduced ? 1100 : 6000 + Math.random() * 1400;
     const t0 = performance.now();
     let last = indexAtPointer(from, angles);
     let prevR = from;
@@ -178,7 +205,7 @@
         let r;
         if (windup > 0 && el < windup) {
           const p = el / windup;
-          r = from - back * (1 - Math.pow(1 - p, 3));
+          r = from - back * Math.sin((p * Math.PI) / 2);
         } else {
           const p = Math.min(1, (el - windup) / duration);
           r = from - back + (to - from + back) * spinEase(p);
@@ -213,112 +240,152 @@
   });
 </script>
 
-<div class="wheel-wrap" class:spinning class:has-winner={!!winnerId} class:empty={!slices.length}>
+<div class="volvelle" class:spinning class:has-winner={!!winnerId} class:empty={!slices.length}>
   {#key pop}
-  <div class="disc">
-    <svg viewBox="-260 -260 520 520" role="img" aria-label={hubLabel}>
-      <defs>
-        <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#f3d58e" />
-          <stop offset="0.45" stop-color="#c1902f" />
-          <stop offset="0.7" stop-color="#8e6420" />
-          <stop offset="1" stop-color="#e2b85e" />
-        </linearGradient>
-        <radialGradient id="shade" r="0.5">
-          <stop offset="0.55" stop-color="#000" stop-opacity="0" />
-          <stop offset="0.93" stop-color="#000" stop-opacity="0.16" />
-          <stop offset="1" stop-color="#000" stop-opacity="0.3" />
-        </radialGradient>
-        <radialGradient id="gloss" cx="0.32" cy="0.18" r="0.75">
-          <stop offset="0" stop-color="#fff" stop-opacity="0.2" />
-          <stop offset="0.5" stop-color="#fff" stop-opacity="0.03" />
-          <stop offset="1" stop-color="#fff" stop-opacity="0" />
-        </radialGradient>
-      </defs>
+    <div class="disc">
+      <svg viewBox="-262 -262 524 524" role="img" aria-label={hubLabel}>
+        <defs>
+          <pattern id="vv-linen" width="3" height="3" patternUnits="userSpaceOnUse">
+            <path d="M0 .5H3M.5 0V3" stroke="#fff" stroke-opacity=".07" stroke-width=".5" />
+          </pattern>
+          <pattern id="vv-paper" width="300" height="300" patternUnits="userSpaceOnUse">
+            <image href="textures/paper.jpg" width="300" height="300" />
+          </pattern>
+          <radialGradient id="vv-shade" r="0.5">
+            <stop offset="0.35" stop-color="#000" stop-opacity="0" />
+            <stop offset="0.92" stop-color="#000" stop-opacity="0.12" />
+            <stop offset="1" stop-color="#000" stop-opacity="0.28" />
+          </radialGradient>
+          <radialGradient id="vv-lamp" cx="0.3" cy="0.15" r="0.9">
+            <stop offset="0" stop-color="#fff6df" stop-opacity="0.22" />
+            <stop offset="0.6" stop-color="#fff6df" stop-opacity="0" />
+          </radialGradient>
+          <path id="vv-hub-path" d="M0 -51A51 51 0 1 1 0 51A51 51 0 1 1 0 -51" />
+        </defs>
 
-      <circle r="257" fill="url(#rim)" />
-      <circle r="250" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.2" />
-      <circle r={R + 3} fill="#3b2419" />
+        <!-- fixed paper dial -->
+        <circle r="258" class="dial-paper" />
+        <circle r="258" fill="url(#vv-paper)" class="grain" />
+        <circle r="253" class="rule heavy" />
+        <circle r="249.5" class="rule" />
+        <circle r="229" class="rule" />
+        {#each ticks as t}
+          <line x1={t.x0} y1={t.y0} x2={t.x1} y2={t.y1} class="tick" class:long={t.long} />
+        {/each}
+        {#each numerals as n}
+          <text class="numeral" x={n.x} y={n.y} transform="rotate({n.rot} {n.x} {n.y})" text-anchor="middle" dominant-baseline="central">{n.n}</text>
+        {/each}
 
-      {#if slices.length}
-        <g class="rotor" transform="rotate({rotation})">
-          {#each slices as s (s.id)}
-            <g class="slice" class:win={s.id === winnerId}>
-              <path d={arcPath(s.start, s.end, R)} fill={s.color} />
-              {#if s.span > 2.4}
-                <g transform="rotate({s.mid - 90})" fill={s.ink}>
-                  <text
-                    class="t-title"
-                    x={R - 20}
-                    y={s.twoLines ? -s.fs * 0.1 : s.fs * 0.36}
-                    text-anchor="end"
-                    font-size={s.fs}>{s.title}</text
-                  >
-                  {#if s.twoLines}
-                    <text class="t-author" x={R - 20} y={s.fs * 0.98} text-anchor="end" font-size={s.fs * 0.78}>{s.author}</text>
-                  {/if}
-                </g>
-              {/if}
-            </g>
-          {/each}
-          {#if slices.length > 1 && slices.length <= 72}
+        {#if slices.length}
+          <g class="rotor" transform="rotate({rotation})">
+            <circle r={R + 3} class="disc-edge" />
             {#each slices as s (s.id)}
-              {@const [x, y] = polar(s.start, R - 6)}
-              <circle class="peg" cx={x} cy={y} r="3.4" />
+              <g class="slice" class:win={s.id === winnerId}>
+                <title>{s.full}</title>
+                <path d={arcPath(s.start, s.end, R, HUB)} fill={s.color} />
+                {#if s.span > 2.2}
+                  <g transform="rotate({s.mid - 90})">
+                    <text
+                      class="t-title"
+                      x={TEXT_OUT}
+                      y={s.twoLines ? -s.fs * 0.14 : s.fs * 0.32}
+                      text-anchor="end"
+                      font-size={s.fs}>{s.title}</text
+                    >
+                    {#if s.twoLines}
+                      <text class="t-author" x={TEXT_OUT} y={s.fs * 0.86} text-anchor="end" font-size={s.fs * 0.5}>{s.author}</text>
+                    {/if}
+                  </g>
+                {/if}
+              </g>
             {/each}
-          {/if}
-          <circle r={R} fill="url(#shade)" pointer-events="none" />
-        </g>
-      {:else}
-        <circle r={R} class="empty-disc" />
-        <circle r={R - 26} class="empty-ring" />
-        <text class="empty-text" y="-66" text-anchor="middle">{emptyText}</text>
-      {/if}
+            <circle r={R} fill="url(#vv-linen)" pointer-events="none" />
+            <circle r={R} fill="url(#vv-shade)" pointer-events="none" />
+            {#if slices.length > 1}
+              {#each slices as s (s.id)}
+                {@const [x0, y0] = polar(s.start, HUB)}
+                {@const [x1, y1] = polar(s.start, R)}
+                <line class="seam" x1={x0} y1={y0} x2={x1} y2={y1} />
+              {/each}
+            {/if}
+            <circle r={R - 0.5} class="gilt" />
+            <circle r={R - 7} class="gilt-dots" />
+            <!-- centre label -->
+            <circle r={HUB} class="label-paper" />
+            <circle r={HUB} fill="url(#vv-paper)" class="grain" />
+            <circle r={HUB - 1} class="gilt" />
+            <circle r={HUB - 4.5} class="rule fine" />
+            <text class="ring-text" xml:space="preserve"><textPath href="#vv-hub-path" startOffset="0" textLength={2 * Math.PI * RING_R - 2} lengthAdjust="spacing">{ring}</textPath></text>
+          </g>
+        {:else}
+          <circle r={R} class="empty-disc" />
+          <circle r={R - 16} class="rule fine dashed" />
+          <text class="empty-text" y="-84" text-anchor="middle">{emptyText}</text>
+        {/if}
 
-      {#each Array(BULBS) as _, i}
-        {@const [x, y] = polar((360 / BULBS) * i, 247.5)}
-        <circle class="bulb" class:odd={i % 2} cx={x} cy={y} r="4.2" style:--i={i} />
-      {/each}
-
-      <circle r={R} fill="url(#gloss)" pointer-events="none" />
-    </svg>
-
-    <button class="hub" type="button" onclick={onhub} disabled={disabled || spinning} aria-label={hubLabel}>
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2zM22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z" />
+        <circle r="258" fill="url(#vv-lamp)" pointer-events="none" />
       </svg>
-    </button>
-  </div>
+
+      <button class="rivet" type="button" onclick={onhub} disabled={disabled || spinning} aria-label={hubLabel}>
+        <span class="rivet-face" aria-hidden="true">❦</span>
+      </button>
+    </div>
   {/key}
 
-  <div class="pointer" bind:this={pointerEl} aria-hidden="true">
-    <svg viewBox="0 0 40 58">
-      <path d="M4 2h32v34L20 56 4 36z" />
-      <path class="pointer-shine" d="M8 6h9v28l-9-2z" />
-      <circle cx="20" cy="15" r="5" />
+  <div class="ribbon" bind:this={ribbonEl} aria-hidden="true">
+    <svg viewBox="0 0 30 132" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="vv-silk" x1="0" x2="1">
+          <stop offset="0" stop-color="#4f161e" />
+          <stop offset="0.35" stop-color="#7b2a33" />
+          <stop offset="0.5" stop-color="#9c3f49" />
+          <stop offset="0.62" stop-color="#7b2a33" />
+          <stop offset="1" stop-color="#4a141c" />
+        </linearGradient>
+        <pattern id="vv-weave" width="30" height="2" patternUnits="userSpaceOnUse">
+          <rect width="30" height="1" fill="#000" fill-opacity=".09" />
+        </pattern>
+      </defs>
+      <path d="M3 0H27V132L15 118L3 132Z" fill="url(#vv-silk)" />
+      <path d="M3 0H27V132L15 118L3 132Z" fill="url(#vv-weave)" />
+      <path d="M5 0V126" stroke="#000" stroke-opacity=".12" stroke-width=".6" />
+      <path d="M25 0V126" stroke="#fff" stroke-opacity=".12" stroke-width=".6" />
     </svg>
+    <span class="eyelet"></span>
   </div>
 </div>
 
 <style>
-  .wheel-wrap {
+  .volvelle {
+    --dial: #f1e8d5;
+    --dial-ink: #4a3d31;
+    --gilt: #c9a66b;
     position: relative;
-    width: min(100%, 520px);
+    width: min(100%, 540px);
     margin: 0 auto;
     aspect-ratio: 1;
-    padding-top: 2%;
+  }
+  :global(:root[data-theme='dark']) .volvelle {
+    --dial: #d8cbb0;
+    --dial-ink: #3d3127;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .volvelle {
+      --dial: #d8cbb0;
+      --dial-ink: #3d3127;
+    }
   }
   .disc {
     position: relative;
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 22px 26px rgba(50, 25, 10, 0.28)) drop-shadow(0 4px 6px rgba(50, 25, 10, 0.2));
-    animation: wheel-in 1.1s var(--ease-out) both;
+    filter: drop-shadow(0 18px 22px rgba(40, 25, 12, 0.22)) drop-shadow(0 2px 3px rgba(40, 25, 12, 0.18));
+    animation: disc-in 1.2s var(--ease-out) both;
   }
-  @keyframes wheel-in {
+  @keyframes disc-in {
     from {
       opacity: 0;
-      transform: rotate(-80deg) scale(0.82);
+      transform: rotate(-40deg) scale(0.94);
     }
   }
   svg {
@@ -327,124 +394,128 @@
     display: block;
     overflow: visible;
   }
+  .dial-paper {
+    fill: var(--dial);
+  }
+  .grain {
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+  }
+  .rule {
+    fill: none;
+    stroke: var(--dial-ink);
+    stroke-width: 0.7;
+    opacity: 0.8;
+  }
+  .rule.heavy {
+    stroke-width: 1.6;
+  }
+  .rule.fine {
+    stroke-width: 0.5;
+    opacity: 0.6;
+  }
+  .rule.dashed {
+    stroke-dasharray: 2 5;
+  }
+  .tick {
+    stroke: var(--dial-ink);
+    stroke-width: 0.6;
+    opacity: 0.7;
+  }
+  .tick.long {
+    stroke-width: 1;
+    opacity: 0.9;
+  }
+  .numeral {
+    fill: var(--dial-ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .disc-edge {
+    fill: #2a1f19;
+    opacity: 0.5;
+  }
   .slice {
     transition:
-      opacity 0.5s ease,
-      filter 0.5s ease;
+      opacity 0.6s ease,
+      filter 0.6s ease;
   }
   .has-winner .slice:not(.win) {
-    opacity: 0.38;
-    filter: saturate(0.5);
+    opacity: 0.32;
+    filter: saturate(0.4);
   }
-  .slice.win {
-    animation: win-glow 1.1s ease-in-out infinite alternate;
+  .slice.win path {
+    stroke: var(--gilt);
+    stroke-width: 2.5;
+    paint-order: stroke;
+    animation: win 1.6s ease-in-out infinite alternate;
   }
-  @keyframes win-glow {
+  @keyframes win {
     to {
-      filter: brightness(1.22) saturate(1.15);
+      filter: brightness(1.18);
     }
   }
-  .slice path {
-    stroke: rgba(40, 20, 10, 0.25);
-    stroke-width: 1;
-  }
   .t-title {
+    fill: #f4ead6;
     font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: 0.005em;
-    font-variation-settings: 'SOFT' 60;
   }
   .t-author {
+    fill: #e2cfa4;
     font-family: var(--font-body);
-    font-weight: 600;
-    opacity: 0.86;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    opacity: 0.92;
   }
-  .peg {
-    fill: #f3d58e;
-    stroke: #7a531a;
-    stroke-width: 1;
+  .seam {
+    stroke: var(--gilt);
+    stroke-width: 0.9;
+    opacity: 0.85;
+  }
+  .gilt {
+    fill: none;
+    stroke: var(--gilt);
+    stroke-width: 1.4;
+  }
+  .gilt-dots {
+    fill: none;
+    stroke: var(--gilt);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-dasharray: 0.1 5.2;
+    opacity: 0.9;
+  }
+  .label-paper {
+    fill: var(--dial);
+  }
+  .ring-text {
+    fill: var(--dial-ink);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 7.6px;
+    letter-spacing: 0.1em;
+    white-space: pre;
   }
   .empty-disc {
-    fill: var(--card-2);
-  }
-  .empty-ring {
-    fill: none;
-    stroke: var(--line-strong);
-    stroke-width: 2;
-    stroke-dasharray: 6 9;
-    animation: dash-spin 40s linear infinite;
-    transform-origin: center;
-  }
-  @keyframes dash-spin {
-    to {
-      transform: rotate(360deg);
-    }
+    fill: color-mix(in srgb, var(--dial) 85%, #8a7355);
   }
   .empty-text {
-    fill: var(--ink-soft);
+    fill: var(--dial-ink);
     font-family: var(--font-display);
-    font-size: 22px;
+    font-size: 26px;
     font-style: italic;
-  }
-  .bulb {
-    fill: #fff3c9;
-    stroke: #8e6420;
-    stroke-width: 1;
-    animation: twinkle 2.4s ease-in-out infinite;
-    animation-delay: calc(var(--i) * -0.17s);
-  }
-  .bulb.odd {
-    animation-delay: calc(var(--i) * -0.17s - 1.2s);
-  }
-  @keyframes twinkle {
-    0%,
-    100% {
-      fill: #fff3c9;
-      filter: drop-shadow(0 0 3px #ffd97a);
-    }
-    50% {
-      fill: #caa25a;
-      filter: none;
-    }
-  }
-  .spinning .bulb {
-    animation: chase 0.56s linear infinite;
-    animation-delay: calc(var(--i) * -0.02s);
-  }
-  @keyframes chase {
-    0%,
-    60% {
-      fill: #caa25a;
-      filter: none;
-    }
-    70%,
-    90% {
-      fill: #fffbe8;
-      filter: drop-shadow(0 0 5px #ffe08a);
-    }
-  }
-  .has-winner .bulb {
-    animation: celebrate 0.5s steps(1) infinite;
-  }
-  .has-winner .bulb.odd {
-    animation-delay: 0.25s;
-  }
-  @keyframes celebrate {
-    0% {
-      fill: #fffbe8;
-      filter: drop-shadow(0 0 6px #ffe08a);
-    }
-    50% {
-      fill: #b98a3c;
-      filter: none;
-    }
+    font-weight: 500;
   }
 
-  .hub {
+  /* brass rivet */
+  .rivet {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 19%;
+    width: 14%;
     aspect-ratio: 1;
     transform: translate(-50%, -50%);
     border-radius: 50%;
@@ -454,66 +525,89 @@
     display: grid;
     place-items: center;
     background:
-      radial-gradient(circle at 35% 30%, #fffaf0, #f3e2c1 55%, #d9bd86 100%);
+      radial-gradient(circle at 34% 28%, #f6e7c2 0%, #d9ba7d 22%, #a8844a 58%, #6f5328 100%);
     box-shadow:
-      0 0 0 5px #c1902f,
-      0 0 0 7px #7a531a,
-      0 8px 18px rgba(40, 20, 8, 0.45),
-      inset 0 -4px 8px rgba(120, 80, 20, 0.25);
+      inset 0 0 0 1px rgba(255, 244, 214, 0.5),
+      inset 0 -6px 12px rgba(70, 45, 15, 0.45),
+      inset 0 5px 10px rgba(255, 245, 220, 0.35),
+      0 3px 6px rgba(40, 25, 10, 0.45),
+      0 0 0 3px rgba(90, 65, 30, 0.35);
     transition:
-      transform 0.25s var(--ease-spring),
-      box-shadow 0.25s ease;
+      filter 0.25s ease,
+      transform 0.25s var(--ease-out);
   }
-  .hub svg {
-    width: 46%;
-    height: 46%;
-    fill: none;
-    stroke: #8c2f45;
-    stroke-width: 2;
-    stroke-linejoin: round;
+  .rivet-face {
+    display: grid;
+    place-items: center;
+    width: 62%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 1px solid rgba(80, 55, 20, 0.45);
+    box-shadow: inset 0 1px 0 rgba(255, 245, 220, 0.4);
+    font-family: var(--font-display);
+    font-size: clamp(16px, 3.4vw, 26px);
+    line-height: 1;
+    color: rgba(70, 45, 15, 0.8);
+    text-shadow: 0 1px 0 rgba(255, 240, 210, 0.55);
   }
-  .hub:hover:not(:disabled) {
-    transform: translate(-50%, -50%) scale(1.08) rotate(-6deg);
+  .rivet:hover:not(:disabled) {
+    filter: brightness(1.07);
+    transform: translate(-50%, -50%) rotate(-12deg);
   }
-  .hub:active:not(:disabled) {
-    transform: translate(-50%, -50%) scale(0.95);
+  .rivet:active:not(:disabled) {
+    transform: translate(-50%, -50%) scale(0.97);
   }
-  .hub:disabled {
+  .rivet:disabled {
     cursor: default;
   }
-  .spinning .hub svg {
-    animation: hub-pulse 0.9s ease-in-out infinite alternate;
+  .spinning .rivet-face {
+    animation: rivet-glint 1.4s ease-in-out infinite;
   }
-  @keyframes hub-pulse {
-    to {
-      transform: scale(0.86);
+  @keyframes rivet-glint {
+    50% {
+      color: rgba(70, 45, 15, 0.45);
     }
   }
 
-  .pointer {
+  /* silk ribbon pointer */
+  .ribbon {
     position: absolute;
-    top: -1.2%;
+    top: -3.5%;
     left: 50%;
-    width: 8.4%;
-    margin-left: -4.2%;
-    transform-origin: 50% 12%;
+    width: 5.2%;
+    height: 12.2%;
+    margin-left: -2.6%;
+    transform-origin: 50% 0;
     z-index: 2;
-    filter: drop-shadow(0 4px 4px rgba(40, 15, 10, 0.4));
+    filter: drop-shadow(0 3px 3px rgba(40, 15, 10, 0.35));
   }
-  .pointer svg path:first-child {
-    fill: #9c3550;
-    stroke: #5a1a2b;
-    stroke-width: 1.5;
+  .ribbon svg {
+    width: 100%;
+    height: 100%;
+    transform-origin: 50% 0;
+    animation: sway 6s ease-in-out infinite;
   }
-  .pointer-shine {
-    fill: rgba(255, 255, 255, 0.22);
+  .spinning .ribbon svg {
+    animation: none;
   }
-  .pointer circle {
-    fill: #f3d58e;
-    stroke: #7a531a;
-    stroke-width: 1.5;
+  @keyframes sway {
+    0%,
+    100% {
+      transform: rotate(0.8deg);
+    }
+    50% {
+      transform: rotate(-0.8deg);
+    }
   }
-  .empty .disc {
-    filter: drop-shadow(0 12px 20px rgba(50, 25, 10, 0.16));
+  .eyelet {
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f6e7c2, #a8844a 60%, #6f5328);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   }
 </style>

@@ -50,9 +50,9 @@
     position: absolute;
     top: calc(100% + 8px);
     z-index: 60;
-    min-width: 230px;
+    min-width: 240px;
     padding: 6px;
-    border-radius: 16px;
+    border-radius: 10px;
     background: var(--card);
     border: 1px solid var(--line);
     box-shadow: var(--shadow-lg);
@@ -73,9 +73,9 @@
     padding: 9px 11px;
     border: none;
     background: none;
-    border-radius: 10px;
+    border-radius: 6px;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 400;
     text-align: left;
     cursor: pointer;
     color: var(--ink);
@@ -96,9 +96,10 @@
   .pop :global(.mlabel) {
     padding: 8px 11px 4px;
     font-size: 11px;
-    font-family: var(--font-mono);
+    font-family: var(--font-body);
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.18em;
     color: var(--ink-faint);
   }
 </style>

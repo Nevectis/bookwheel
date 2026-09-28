@@ -1,10 +1,8 @@
 <script>
-  import { fly, fade, slide } from 'svelte/transition';
-  import { backOut } from 'svelte/easing';
-  import HeroArt from './HeroArt.svelte';
-  import Icon from './Icon.svelte';
+  import { fly, slide } from 'svelte/transition';
+  import BookSpread from './BookSpread.svelte';
   import { club } from '../lib/store.svelte.js';
-  import { i18n, setLang, t } from '../lib/i18n.svelte.js';
+  import { t } from '../lib/i18n.svelte.js';
 
   let tab = $state('signin');
   let name = $state('');
@@ -62,21 +60,10 @@
   }
 </script>
 
-<main class="auth">
-  <div class="lang">
-    <button class:on={i18n.lang === 'de'} onclick={() => setLang('de')}>DE</button>
-    <button class:on={i18n.lang === 'en'} onclick={() => setLang('en')}>EN</button>
-  </div>
-
-  <section class="brand" in:fade={{ duration: 800 }}>
-    <HeroArt />
-    <h1 class="logo">Book<span class="display-italic">wheel</span></h1>
-    <p class="tag">{t('app.tagline')}</p>
-  </section>
-
-  <section class="card panel" in:fly={{ y: 30, duration: 700, delay: 150, easing: backOut }}>
+<BookSpread owner="Bookwheel" motto={t('app.tagline')}>
+  <section class="panel">
     {#if club.mode === 'demo'}
-      <p class="eyebrow"><Icon name="sparkles" size={14} /> {t('demo.title')}</p>
+      <p class="eyebrow">{t('demo.title')}</p>
       <h2>{t('auth.welcome')}</h2>
       <p class="intro">{t('demo.intro')}</p>
       <form onsubmit={demo} class="form">
@@ -86,14 +73,13 @@
         </label>
         <button class="btn btn-primary big" type="submit" disabled={busy} data-testid="demo-start">
           {t('demo.start')}
-          <Icon name="right" size={18} stroke={2.6} />
         </button>
       </form>
       <p class="setup">
-        <Icon name="book" size={14} />
         <a href="https://github.com/nevectis/bookwheel#readme" target="_blank" rel="noopener">{t('demo.setup')}: Firebase</a>
       </p>
     {:else}
+      <p class="eyebrow">Bookwheel</p>
       <h2>{t('auth.welcome')}</h2>
       <p class="intro">{t('auth.intro')}</p>
 
@@ -149,83 +135,29 @@
     {#if error}<p class="form-error" role="alert" in:fly={{ y: -6 }}>{error}</p>{/if}
     {#if info}<p class="info" role="status" in:fly={{ y: -6 }}>{info}</p>{/if}
   </section>
-</main>
+</BookSpread>
 
 <style>
-  .auth {
-    position: relative;
-    z-index: 2;
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    align-items: center;
-    gap: clamp(24px, 5vw, 80px);
-    padding: clamp(24px, 6vw, 80px);
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  .lang {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-    display: flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: 999px;
-    background: var(--card);
-    border: 1px solid var(--line);
-  }
-  .lang button {
-    border: none;
-    background: none;
-    padding: 5px 11px;
-    border-radius: 999px;
-    font-weight: 800;
-    font-size: 12px;
-    cursor: pointer;
-    color: var(--ink-soft);
-  }
-  .lang button.on {
-    background: var(--ink);
-    color: var(--paper);
-  }
-  .brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 10px;
-  }
-  .logo {
-    font-size: clamp(54px, 9vw, 96px);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 0.95;
-    margin-top: 10px;
-  }
-  .tag {
-    font-size: clamp(16px, 2vw, 19px);
-    color: var(--ink-soft);
-    max-width: 30ch;
-  }
   .panel {
-    padding: clamp(24px, 4vw, 40px);
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
   .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--accent);
+    color: var(--oxblood);
   }
   h2 {
-    font-size: clamp(28px, 4vw, 36px);
+    font-size: clamp(38px, 5vw, 52px);
+    font-weight: 500;
+    line-height: 1;
   }
   .intro {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.4;
     color: var(--ink-soft);
+    margin-bottom: 6px;
   }
   .form {
     display: flex;
@@ -235,27 +167,32 @@
   }
   .big {
     min-height: 50px;
-    font-size: 16px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: 0.01em;
   }
   .google {
-    min-height: 50px;
-    font-size: 15.5px;
-    --btn-bg: var(--card);
+    min-height: 48px;
+    font-size: 14.5px;
     margin-top: 6px;
   }
   .or {
     display: flex;
     align-items: center;
     gap: 12px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
     color: var(--ink-faint);
-    font-size: 13px;
   }
   .or::before,
   .or::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--line);
+    background: var(--line-strong);
   }
   .switch {
     display: flex;
@@ -267,30 +204,24 @@
     background: none;
     border: none;
     padding: 0;
-    color: var(--accent);
-    font-weight: 700;
+    color: var(--link);
+    font-weight: 500;
     cursor: pointer;
     font-size: 14px;
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 3px;
   }
   .setup {
-    display: flex;
-    align-items: center;
-    gap: 6px;
     font-size: 13px;
     color: var(--ink-soft);
+    letter-spacing: 0.04em;
+  }
+  .setup a {
+    text-decoration-color: var(--gold);
   }
   .info {
     color: var(--green);
-    font-weight: 600;
     font-size: 14px;
-  }
-  @media (max-width: 860px) {
-    .auth {
-      grid-template-columns: 1fr;
-      padding-top: 64px;
-    }
-    .brand :global(.art) {
-      width: min(230px, 60vw);
-    }
   }
 </style>

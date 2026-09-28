@@ -58,10 +58,10 @@
 
 <div class="goals">
   <div class="g-head">
-    <h3><Icon name="flag" size={18} /> {t('goals.title')}</h3>
+    <h3>{t('goals.title')}</h3>
     {#if !adding}
       <button class="btn btn-ghost btn-sm" type="button" onclick={() => (adding = true)} data-testid="add-goal">
-        <Icon name="plus" size={16} />
+        <Icon name="plus" size={15} stroke={1.6} />
         {t('goals.add')}
       </button>
     {/if}
@@ -76,19 +76,16 @@
       {#each goals as g (g.id)}
         {@const r = reachedCount(g)}
         {@const past = g.date < today}
-        <li class="goal" class:past class:next={g.id === nextId} animate:flip={{ duration: 300 }} in:fly={{ y: 10, duration: 350 }} out:slide={{ duration: 220 }}>
-          <span class="g-date">
-            <Icon name="calendar" size={15} />
-            {shortDay(g.date, locale())}
-          </span>
+        <li class="goal" class:past class:next={g.id === nextId} animate:flip={{ duration: 300 }} in:fly={{ y: 8, duration: 350 }} out:slide={{ duration: 220 }}>
+          <span class="g-date">{shortDay(g.date, locale())}</span>
           <span class="g-page">{t('goals.page')} <strong>{g.page}</strong></span>
           <span class="g-when">{when(g.date)}</span>
           <span class="g-reached" class:all={r.n === r.m}>
-            {#if r.n === r.m}<Icon name="check" size={14} stroke={3} />{/if}
+            {#if r.n === r.m}<Icon name="check" size={13} stroke={2.4} />{/if}
             {t('goals.reached', r)}
           </span>
           <button class="btn btn-ghost btn-icon btn-sm x" type="button" aria-label={t('goals.remove')} onclick={() => club.removeGoal(book, g.id)}>
-            <Icon name="x" size={15} />
+            <Icon name="x" size={14} stroke={1.6} />
           </button>
         </li>
       {/each}
@@ -115,95 +112,104 @@
 
 <style>
   .goals {
-    border-top: 1px dashed var(--line);
-    padding-top: 18px;
-    margin-top: 20px;
+    margin-top: 30px;
   }
   .g-head {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid var(--ink);
   }
   h3 {
-    font-size: 19px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  h3 :global(svg) {
-    color: var(--accent);
+    font-size: 24px;
+    font-weight: 600;
   }
   .empty {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 17px;
     color: var(--ink-soft);
-    font-size: 14.5px;
+    padding: 12px 0;
   }
   .g-list {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
   }
   .goal {
+    position: relative;
     display: grid;
-    grid-template-columns: auto auto 1fr auto auto;
+    grid-template-columns: 76px auto 1fr auto auto;
     align-items: center;
-    gap: 6px 12px;
-    padding: 8px 8px 8px 12px;
-    border-radius: 14px;
-    background: var(--card-2);
-    border: 1px solid var(--line);
+    gap: 6px 14px;
+    padding: 9px 0 9px 14px;
+    border-bottom: 1px solid var(--line);
     font-size: 14px;
   }
-  .goal.next {
-    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-    background: color-mix(in srgb, var(--accent-soft) 55%, var(--card-2));
-    box-shadow: 0 6px 16px -12px var(--accent);
+  .goal::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    margin-top: -2.5px;
+    border-radius: 50%;
+    background: var(--line-strong);
+  }
+  .goal.next::before {
+    background: var(--oxblood);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--oxblood) 18%, transparent);
   }
   .goal.past {
-    opacity: 0.62;
+    color: var(--ink-faint);
   }
   .g-date {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 700;
+    font-family: var(--font-type);
+    font-size: 13.5px;
+  }
+  .g-page {
+    font-family: var(--font-display);
+    font-size: 18px;
   }
   .g-page strong {
-    font-family: var(--font-mono);
+    font-weight: 700;
+    font-variant-numeric: oldstyle-nums;
   }
   .g-when {
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 16px;
     color: var(--ink-soft);
-    font-size: 13px;
+  }
+  .goal.next .g-when {
+    color: var(--oxblood);
   }
   .g-reached {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 12.5px;
-    font-weight: 700;
+    white-space: nowrap;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--ink-soft);
-    background: var(--card);
-    border-radius: 999px;
-    padding: 2px 9px;
-    border: 1px solid var(--line);
   }
   .g-reached.all {
     color: var(--green);
-    background: var(--green-soft);
-    border-color: transparent;
   }
   .g-form {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 10px;
-    padding: 14px;
-    border-radius: 16px;
-    background: var(--card-2);
+    gap: 12px;
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--paper-2) 55%, var(--card));
     border: 1px solid var(--line);
   }
   .g-actions {

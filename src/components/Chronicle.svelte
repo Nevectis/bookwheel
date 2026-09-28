@@ -23,7 +23,7 @@
   <div class="section-head" use:reveal>
     <div>
       <p class="eyebrow">{t('nav.chronicle')}</p>
-      <h2 id="chron-title" class="section-title">{t('chron.title')}</h2>
+      <h2 id="chron-title" class="section-title"><em>{t('chron.title')}</em></h2>
       <p class="section-sub">{t('chron.sub')}</p>
     </div>
   </div>
@@ -52,10 +52,13 @@
 
 <style>
   .empty {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 19px;
     color: var(--ink-soft);
-    padding: 24px;
-    border-radius: 20px;
-    border: 1.5px dashed var(--line-strong);
+    padding: 28px;
+    border-radius: 10px;
+    border: 1px dashed var(--line-strong);
     text-align: center;
   }
   .timeline {
@@ -67,68 +70,58 @@
   .timeline::before {
     content: '';
     position: absolute;
-    left: 11px;
-    top: 16px;
-    bottom: 16px;
-    width: 2px;
-    background: linear-gradient(180deg, var(--accent), var(--gold) 50%, var(--line));
-    border-radius: 2px;
+    left: 10px;
+    top: 18px;
+    bottom: 18px;
+    width: 1px;
+    background: linear-gradient(180deg, var(--gold), var(--line-strong) 70%, transparent);
   }
   .month {
     position: relative;
     display: grid;
-    grid-template-columns: 170px 1fr;
-    gap: 18px 24px;
-    padding-bottom: 30px;
+    grid-template-columns: 190px 1fr;
+    gap: 18px 28px;
+    padding-bottom: 34px;
   }
   .m-label {
     position: relative;
     padding-left: 36px;
-    padding-top: 6px;
+    padding-top: 4px;
     display: flex;
     flex-direction: column;
   }
   .node {
     position: absolute;
-    left: 0;
-    top: 10px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--card);
-    border: 3px solid var(--gold);
+    left: 1px;
+    top: 16px;
+    width: 13px;
+    height: 13px;
+    transform: rotate(45deg);
+    background: var(--paper);
+    border: 1px solid var(--gold);
     box-shadow: 0 0 0 4px var(--paper);
   }
   .month.now .node {
-    border-color: var(--accent);
-    background: var(--accent);
-    animation: node-pulse 2s ease-out infinite;
-  }
-  @keyframes node-pulse {
-    0% {
-      box-shadow:
-        0 0 0 4px var(--paper),
-        0 0 0 4px color-mix(in srgb, var(--accent) 50%, transparent);
-    }
-    100% {
-      box-shadow:
-        0 0 0 4px var(--paper),
-        0 0 0 14px transparent;
-    }
+    background: var(--oxblood);
+    border-color: var(--oxblood);
   }
   .m-name {
     font-family: var(--font-display);
-    font-size: 28px;
-    font-weight: 600;
+    font-size: 38px;
+    font-weight: 500;
     font-style: italic;
-    line-height: 1.05;
+    line-height: 1;
     text-transform: capitalize;
   }
+  .month.now .m-name {
+    color: var(--oxblood);
+  }
   .m-year {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.15em;
+    font-family: var(--font-type);
+    font-size: 13px;
+    letter-spacing: 0.1em;
     color: var(--ink-faint);
+    margin-top: 4px;
   }
   .m-books {
     display: flex;
@@ -140,34 +133,33 @@
     .month {
       grid-template-columns: 1fr;
       gap: 10px;
-      padding-left: 0;
     }
     .m-label {
       flex-direction: row;
       align-items: baseline;
-      gap: 10px;
+      gap: 12px;
     }
     .m-name {
-      font-size: 24px;
+      font-size: 30px;
     }
     .m-books {
-      padding-left: 36px;
+      padding-left: 30px;
     }
   }
   @media (max-width: 420px) {
     .m-books {
-      padding-left: 24px;
+      padding-left: 22px;
     }
     .timeline::before {
       left: 7px;
     }
     .node {
-      width: 12px;
-      height: 12px;
       left: 1px;
+      width: 11px;
+      height: 11px;
     }
     .m-label {
-      padding-left: 24px;
+      padding-left: 26px;
     }
   }
 </style>

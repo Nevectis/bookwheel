@@ -75,7 +75,7 @@ test('founding, joining by invite code, spinning, progress and the rating reveal
   await expect(wheelCount(bob)).toHaveText(/2 Bücher im Rad/);
 
   // ── Alice spins; Bob gets the popup live and the wheel updates for both ──
-  await alice.locator('.fchip', { hasText: 'Fantasy' }).click();
+  await alice.locator('.filters .tag', { hasText: 'Fantasy' }).click();
   await alice.getByTestId('spin').click();
   await expect(alice.getByTestId('spin-result')).toContainText('Piranesi', { timeout: 10_000 });
   await expect(bob.getByTestId('spin-result')).toContainText('Alice hat am Rad gedreht!');
