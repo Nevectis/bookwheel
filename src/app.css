@@ -11,7 +11,7 @@
   --card-2: #f4ede0;
   --ink: #2a2420;
   --ink-soft: #66594e;
-  --ink-faint: #9a8c7e;
+  --ink-faint: #85776a;
   --line: #e0d4bf;
   --line-strong: #c9b99e;
 
@@ -27,6 +27,7 @@
 
   /* gilt tooling */
   --gold: #a88449;
+  --gold-ink: #7f6232; /* gold that is dark enough for text on paper */
   --gold-2: #c9a66b;
   --gold-soft: #efe4cb;
 
@@ -48,7 +49,7 @@
   --radius: 14px;
   --radius-sm: 8px;
   --font-display: 'Cormorant Garamond', 'Cormorant', Garamond, 'Times New Roman', serif;
-  --font-body: 'Jost', 'Futura', 'Century Gothic', system-ui, sans-serif;
+  --font-body: 'Jost Variable', 'Jost', 'Futura', 'Century Gothic', system-ui, sans-serif;
   --font-type: 'Courier Prime', 'Courier New', ui-monospace, monospace;
   --font-mono: var(--font-type);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -65,7 +66,7 @@
     --card-2: #2a231d;
     --ink: #eee4d2;
     --ink-soft: #bcad97;
-    --ink-faint: #8a7c6b;
+    --ink-faint: #a09180;
     --line: #372e26;
     --line-strong: #4c4035;
     --accent: #36594a;
@@ -77,6 +78,7 @@
     --oxblood-soft: #3a2124;
     --navy: #9fb1d0;
     --gold: #cfae72;
+    --gold-ink: #cfae72;
     --gold-2: #e0c690;
     --gold-soft: #3a3020;
     --green: #93c09f;
@@ -100,7 +102,7 @@
   --card-2: #2a231d;
   --ink: #eee4d2;
   --ink-soft: #bcad97;
-  --ink-faint: #8a7c6b;
+  --ink-faint: #a09180;
   --line: #372e26;
   --line-strong: #4c4035;
   --accent: #36594a;
@@ -112,6 +114,7 @@
   --oxblood-soft: #3a2124;
   --navy: #9fb1d0;
   --gold: #cfae72;
+  --gold-ink: #cfae72;
   --gold-2: #e0c690;
   --gold-soft: #3a3020;
   --green: #93c09f;
@@ -411,10 +414,13 @@ button {
   color: var(--ink-soft);
 }
 .field small {
-  font-weight: 400;
-  letter-spacing: 0.04em;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   text-transform: none;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 input[type='text'],
 input[type='email'],

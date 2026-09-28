@@ -87,6 +87,7 @@ export const de = {
   'hero.stats': ({ members, shelf, read }) =>
     `${plural(members, '{n} Mitglied', '{n} Mitglieder')} · ${plural(shelf, '{n} Buch im Regal', '{n} Bücher im Regal')} · ${read} gelesen`,
   'footer.colophon': 'Ein Lesekreis-Werkzeug für {club}. Gesetzt aus der Cormorant Garamond und der Jost.',
+  'footer.top': 'Nach oben',
 
   'wheel.title': 'Das Rad',
   'wheel.count': ({ n }) => plural(n, '{n} Buch im Rad', '{n} Bücher im Rad'),
@@ -202,7 +203,8 @@ export const de = {
   'review.later': 'Später bewerten',
   'review.saved': 'Danke für deine Bewertung!',
   'review.needStars': 'Wähle 1 bis 5 Sterne.',
-  'review.sealed': 'Die Bewertungen bleiben verdeckt, bis alle abgestimmt haben — dann gibt’s den Durchschnitt.',
+  'review.sealed': 'Die Bewertungen der anderen siehst du, sobald du selbst bewertet hast. So verrät dir niemand etwas vorher.',
+  'review.revealed': 'Danke! Jetzt siehst du auch die Bewertungen der anderen.',
   'review.star': ({ n }) => plural(n, '{n} Stern', '{n} Sterne'),
 
   'chron.title': 'Chronik',
@@ -214,7 +216,7 @@ export const de = {
   'chron.waitingFor': 'Es fehlt noch: {names}',
   'chron.showReviews': 'Rezensionen lesen',
   'chron.hideReviews': 'Rezensionen ausblenden',
-  'chron.sealed': 'Die Rezensionen werden enthüllt, sobald alle bewertet haben.',
+  'chron.sealed': 'Bewerte selbst, um die Bewertungen der anderen zu sehen.',
   'chron.noText': 'ohne Worte, nur Sterne',
   'chron.rate': 'Gelesen & bewerten',
   'chron.editRating': 'Meine Bewertung ändern',
@@ -330,6 +332,7 @@ export const en = {
   'hero.stats': ({ members, shelf, read }) =>
     `${plural(members, '{n} member', '{n} members')} · ${plural(shelf, '{n} book on the shelf', '{n} books on the shelf')} · ${read} read`,
   'footer.colophon': 'A reading-circle companion for {club}. Set in Cormorant Garamond and Jost.',
+  'footer.top': 'Back to top',
 
   'wheel.title': 'The wheel',
   'wheel.count': ({ n }) => plural(n, '{n} book on the wheel', '{n} books on the wheel'),
@@ -445,7 +448,8 @@ export const en = {
   'review.later': 'Rate later',
   'review.saved': 'Thanks for your rating!',
   'review.needStars': 'Pick 1 to 5 stars.',
-  'review.sealed': 'Ratings stay hidden until everyone has voted — then the average is revealed.',
+  'review.sealed': 'You’ll see everyone else’s ratings once you’ve rated it yourself, so nobody spoils it for you.',
+  'review.revealed': 'Thanks! You can now see everyone else’s ratings too.',
   'review.star': ({ n }) => plural(n, '{n} star', '{n} stars'),
 
   'chron.title': 'Chronicle',
@@ -457,7 +461,7 @@ export const en = {
   'chron.waitingFor': 'Still waiting for {names}',
   'chron.showReviews': 'Read the reviews',
   'chron.hideReviews': 'Hide reviews',
-  'chron.sealed': 'The reviews are revealed once everyone has rated.',
+  'chron.sealed': 'Rate it yourself to see what the others thought.',
   'chron.noText': 'no words, just stars',
   'chron.rate': 'Finished & rate',
   'chron.editRating': 'Edit my rating',

@@ -95,14 +95,18 @@
     </main>
 
     <footer class="foot">
-      <div class="edge" aria-hidden="true"></div>
-      <div class="container foot-inner">
-        <a class="fbrand" href="#top" onclick={(e) => scrollToSection(e, 'top')}>
-          <Mark size={34} />
-          <span>Bookwheel</span>
-        </a>
-        <p class="colophon">{t('footer.colophon', { club: club.meta?.name ?? '' })}</p>
-        <a class="up" href="#top" onclick={(e) => scrollToSection(e, 'top')} aria-label="↑"><Icon name="arrowUp" size={15} stroke={1.6} /></a>
+      <div class="back-endpaper">
+        <div class="plate">
+          <a class="fbrand" href="#top" onclick={(e) => scrollToSection(e, 'top')}>
+            <Mark size={38} />
+            <span>Bookwheel</span>
+          </a>
+          <p class="colophon">{t('footer.colophon', { club: club.meta?.name ?? '' })}</p>
+          <a class="up" href="#top" onclick={(e) => scrollToSection(e, 'top')}>
+            <Icon name="arrowUp" size={14} stroke={1.6} />
+            {t('footer.top')}
+          </a>
+        </div>
       </div>
     </footer>
   </div>
@@ -262,51 +266,87 @@
   .foot {
     position: relative;
     z-index: 2;
-    margin-top: 40px;
+    margin-top: 48px;
   }
-  /* marbled page edges */
-  .edge {
-    height: 12px;
-    background: url('/textures/marble.jpg') center / 900px auto repeat-x;
+  /* the back endpaper: marbled paper with the club's bookplate */
+  .back-endpaper {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: clamp(56px, 8vw, 96px) 16px clamp(64px, 9vw, 110px);
+    background: url('/textures/marble.jpg') center / cover;
     border-top: 1px solid var(--line-strong);
-    border-bottom: 1px solid var(--line-strong);
-    opacity: 0.9;
+    box-shadow: inset 0 18px 24px -18px rgba(20, 12, 5, 0.55);
   }
-  .foot-inner {
+  .back-endpaper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--endpaper-dim, transparent);
+    pointer-events: none;
+  }
+  :global(:root[data-theme='dark']) .back-endpaper {
+    --endpaper-dim: rgba(14, 10, 7, 0.45);
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .back-endpaper {
+      --endpaper-dim: rgba(14, 10, 7, 0.45);
+    }
+  }
+  .plate {
+    position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 22px;
-    padding-top: 28px;
-    padding-bottom: 44px;
-    color: var(--ink-soft);
+    gap: 12px;
+    width: min(520px, 100%);
+    padding: 30px 32px 26px;
+    text-align: center;
+    background: var(--card);
+    color: var(--ink);
+    border: 1px solid var(--gold);
+    outline: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    outline-offset: -8px;
+    box-shadow:
+      0 2px 3px rgba(20, 10, 4, 0.25),
+      0 24px 44px -20px rgba(20, 10, 4, 0.6);
   }
   .fbrand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     text-decoration: none;
     color: var(--ink);
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 22px;
-    flex: none;
+    font-size: 30px;
   }
   .colophon {
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 16px;
-    max-width: 60ch;
+    font-size: 18px;
+    line-height: 1.4;
+    color: var(--ink-soft);
+    max-width: 40ch;
+    text-wrap: balance;
   }
   .up {
-    margin-left: auto;
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    flex: none;
-    border-radius: 50%;
-    border: 1px solid var(--line-strong);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
     color: var(--ink-soft);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+  .up:hover {
+    color: var(--ink);
+    background: var(--card-2);
   }
   @media (max-width: 1000px) {
     .stage-grid {
@@ -317,9 +357,11 @@
     }
   }
   @media (max-width: 760px) {
-    .foot-inner {
-      flex-wrap: wrap;
-      padding-bottom: 120px;
+    .back-endpaper {
+      padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+    }
+    .plate {
+      padding: 24px 20px 20px;
     }
     .hero-stats {
       flex-wrap: wrap;

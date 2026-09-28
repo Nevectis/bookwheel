@@ -235,7 +235,7 @@
   .b-author {
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 16px;
+    font-size: 17px;
     color: var(--ink-soft);
     margin-top: 2px;
     white-space: nowrap;
@@ -247,7 +247,7 @@
     align-items: center;
     gap: 6px;
     margin-top: 8px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -261,8 +261,8 @@
   }
   .b-by {
     font-family: var(--font-type);
-    font-size: 11px;
-    color: var(--ink-faint);
+    font-size: 12px;
+    color: var(--ink-soft);
     margin-top: 3px;
   }
   @media (max-width: 640px) {

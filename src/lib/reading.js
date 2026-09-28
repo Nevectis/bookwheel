@@ -54,11 +54,15 @@ export function clampPage(value, pageCount) {
 }
 
 /**
- * Rating status of one book. Everyone who was already in the club when the
- * book was picked is expected to rate it; once they all have, the average is
- * revealed. People who rated but joined later count as well.
+ * Rating status of one book, as seen by `viewerId`.
+ *
+ * Ratings and reviews are revealed to you once you've rated the book yourself,
+ * so nobody spoils it for you — nobody has to wait for the whole club.
+ * `complete` says whether everyone expected has rated (the average is final):
+ * everyone who was already in the club when the book was picked, plus anyone
+ * who joined later but rated anyway.
  */
-export function ratingSummary(book, members, progress) {
+export function ratingSummary(book, members, progress, viewerId = null) {
   const entries = progress.filter((p) => p.bookId === book.id);
   const rated = entries.filter((p) => Number.isInteger(p.rating) && p.rating >= 1 && p.rating <= 5);
   const ratedIds = new Set(rated.map((p) => p.uid));
@@ -74,7 +78,8 @@ export function ratingSummary(book, members, progress) {
 
   return {
     complete,
-    average: complete ? average : null,
+    revealed: viewerId != null && ratedIds.has(viewerId),
+    average,
     ratedCount: rated.length,
     expectedCount: expectedIds.size,
     pending,

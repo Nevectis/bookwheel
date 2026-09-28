@@ -89,7 +89,7 @@
     {/if}
 
     <div class="rating">
-      {#if s.complete}
+      {#if s.revealed}
         <div class="avg" in:scale={{ start: 0.9, duration: 700, easing: cubicOut }} data-testid="avg-rating">
           <span class="avg-num">{formatAverage(s.average)}</span>
           <div class="avg-side">
@@ -98,10 +98,11 @@
           </div>
         </div>
       {:else}
-        <div class="sealed">
+        <div class="sealed" data-testid="sealed">
           <WaxSeal size={48} />
           <div class="sealed-text">
             <p class="votes">{t('chron.votes', { n: s.ratedCount, m: s.expectedCount })}</p>
+            {#if s.ratedCount}<p class="seal-note">{t('chron.sealed')}</p>{/if}
             <div class="voters">
               {#each club.sortedMembers.filter((m) => ratedIds.has(m.id) || s.pending.some((p) => p.id === m.id)) as m (m.id)}
                 <span class="voter" class:done={ratedIds.has(m.id)} title={m.name}>
@@ -129,16 +130,14 @@
           <Icon name="sparkles" size={14} stroke={1.6} />{t('chron.rate')}
         </button>
       {/if}
-      {#if s.complete && reviews.length}
+      {#if s.revealed && reviews.length}
         <button class="btn btn-ghost btn-sm" type="button" onclick={() => (open = !open)} aria-expanded={open}>
           <Icon name="book" size={14} stroke={1.6} />{open ? t('chron.hideReviews') : t('chron.showReviews')}
         </button>
-      {:else if !s.complete && s.ratedCount}
-        <span class="hint">{t('chron.sealed')}</span>
       {/if}
     </div>
 
-    {#if open && s.complete}
+    {#if open && s.revealed}
       <ul class="reviews" transition:slide={{ duration: 320 }}>
         {#each reviews as r, i (r.uid)}
           <li in:fly={{ y: 10, delay: 60 * i }}>
@@ -204,7 +203,7 @@
   }
   .now-badge {
     display: inline-block;
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.2em;
@@ -222,17 +221,15 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
   .picked {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-size: 15.5px;
-    color: var(--ink-faint);
+    font-size: 13.5px;
+    color: var(--ink-soft);
   }
   .month-edit {
     display: flex;
@@ -266,7 +263,7 @@
     gap: 6px;
   }
   .avg-of {
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -318,10 +315,13 @@
     box-shadow: 0 0 0 2px var(--card);
   }
   .waiting {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-size: 16px;
+    font-size: 13.5px;
     color: var(--ink-soft);
+  }
+  .seal-note {
+    font-size: 14px;
+    color: var(--ink);
+    margin: 2px 0 2px;
   }
   .c-actions {
     display: flex;
@@ -332,12 +332,6 @@
   }
   .my-rating {
     display: inline-flex;
-  }
-  .hint {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-size: 15px;
-    color: var(--ink-faint);
   }
   .reviews {
     list-style: none;
@@ -372,15 +366,15 @@
     content: none;
   }
   .r-text.muted {
-    color: var(--ink-faint);
-    font-size: 16px;
+    color: var(--ink-soft);
+    font-size: 17px;
   }
   .r-head {
     display: flex;
     align-items: center;
     gap: 8px;
     margin-top: 6px;
-    font-size: 12px;
+    font-size: 12.5px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-soft);

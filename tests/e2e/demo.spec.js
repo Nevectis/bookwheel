@@ -130,11 +130,18 @@ test('the whole book-club loop', async ({ page }) => {
   await page.getByTestId('review-submit').click();
   await expect(page.getByText('Danke für deine Bewertung!')).toBeVisible();
   await expect(review).toBeHidden();
-  await expect(entry).toContainText('1 von 5 Bewertungen'); // sealed until everyone rated
+  // Rating it reveals the ratings to me straight away (nobody else has rated yet)
+  await expect(entry.getByTestId('avg-rating')).toContainText('4,0');
+  await expect(entry).toContainText('1 von 5 Bewertungen');
 
   // ── Last missing rating reveals the average (4+5+3+4+5)/5 = 4.2 ──
   const goneGirl = page.getByTestId('chronicle-entry').filter({ hasText: 'Gone Girl' });
+  // Others have rated, but I haven't: sealed for me, no spoilers
+  await expect(goneGirl.getByTestId('sealed')).toBeVisible();
   await expect(goneGirl).toContainText('Es fehlt noch: du');
+  await expect(goneGirl.getByTestId('avg-rating')).toHaveCount(0);
+  await expect(goneGirl.getByRole('button', { name: 'Rezensionen lesen' })).toHaveCount(0);
+  await expect(goneGirl).not.toContainText('Der Twist in der Mitte!!');
   await goneGirl.getByTestId('chron-rate').click();
   await page.getByRole('radio', { name: '5 Sterne' }).click();
   await page.getByTestId('review-submit').click();

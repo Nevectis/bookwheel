@@ -113,6 +113,7 @@
 <style>
   .goals {
     margin-top: 30px;
+    container: goals / inline-size;
   }
   .g-head {
     display: flex;
@@ -164,7 +165,7 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--oxblood) 18%, transparent);
   }
   .goal.past {
-    color: var(--ink-faint);
+    color: var(--ink-soft);
   }
   .g-date {
     font-family: var(--font-type);
@@ -173,6 +174,7 @@
   .g-page {
     font-family: var(--font-display);
     font-size: 18px;
+    white-space: nowrap;
   }
   .g-page strong {
     font-weight: 700;
@@ -182,7 +184,7 @@
     white-space: nowrap;
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 16px;
+    font-size: 17px;
     color: var(--ink-soft);
   }
   .goal.next .g-when {
@@ -193,7 +195,7 @@
     align-items: center;
     gap: 4px;
     white-space: nowrap;
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -218,19 +220,35 @@
     justify-content: flex-end;
     gap: 8px;
   }
-  @media (max-width: 520px) {
+  /* narrow card: the tally moves under the page number */
+  @container goals (max-width: 470px) {
+    .goal {
+      grid-template-columns: 76px auto 1fr auto;
+    }
+    .goal::before {
+      top: 22px;
+    }
+    .g-when {
+      justify-self: end;
+    }
+    .g-reached {
+      grid-row: 2;
+      grid-column: 2 / 4;
+      justify-self: start;
+    }
+    .x {
+      grid-row: 1;
+      grid-column: 4;
+    }
+  }
+  @container goals (max-width: 300px) {
     .goal {
       grid-template-columns: auto 1fr auto;
     }
     .g-when {
       display: none;
     }
-    .g-reached {
-      grid-column: 1 / 3;
-      justify-self: start;
-    }
     .x {
-      grid-row: 1;
       grid-column: 3;
     }
   }

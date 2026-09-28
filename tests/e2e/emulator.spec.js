@@ -25,7 +25,9 @@ async function addBook(page, { title, author, genre, pages }) {
   await page.getByTestId('book-title').fill(title);
   await page.getByTestId('book-author').fill(author);
   if (pages) await page.getByTestId('book-pages').fill(String(pages));
-  await page.getByRole('radio', { name: genre, exact: true }).check({ force: true });
+  // click the visible label like a person would (waits out a toast covering it)
+  await page.locator('label', { has: page.getByRole('radio', { name: genre, exact: true }) }).click();
+  await expect(page.getByRole('radio', { name: genre, exact: true })).toBeChecked();
   await page.getByTestId('book-submit').click();
   await expect(page.getByTestId('shelf')).toContainText(title);
 }
@@ -104,14 +106,18 @@ test('founding, joining by invite code, spinning, progress and the rating reveal
   await alice.getByRole('radio', { name: '5 Sterne' }).click();
   await alice.getByTestId('review-submit').click();
   const bobEntry = bob.getByTestId('chronicle-entry').filter({ hasText: 'Piranesi' });
+  const aliceEntry = alice.getByTestId('chronicle-entry').filter({ hasText: 'Piranesi' });
+  // Alice rated: she sees the ratings now. Bob hasn't: sealed for him.
+  await expect(aliceEntry.getByTestId('avg-rating')).toContainText('5,0');
+  await expect(bobEntry.getByTestId('sealed')).toBeVisible();
   await expect(bobEntry).toContainText('1 von 2 Bewertungen');
   await expect(bobEntry).toContainText('Es fehlt noch: du');
+  await expect(bobEntry.getByTestId('avg-rating')).toHaveCount(0);
 
   await bob.getByTestId('mark-read').click();
   await bob.getByRole('radio', { name: '3 Sterne' }).click();
   await bob.getByTestId('review-text').fill('Schön, aber verwirrend.');
   await bob.getByTestId('review-submit').click();
-  const aliceEntry = alice.getByTestId('chronicle-entry').filter({ hasText: 'Piranesi' });
   await expect(aliceEntry.getByTestId('avg-rating')).toContainText('4,0');
   await expect(bobEntry.getByTestId('avg-rating')).toContainText('4,0');
   await aliceEntry.getByRole('button', { name: 'Rezensionen lesen' }).click();

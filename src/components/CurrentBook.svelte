@@ -292,11 +292,11 @@
     border-bottom: 1px solid var(--line);
   }
   dt {
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--ink-faint);
+    color: var(--ink-soft);
   }
   dd {
     margin: 0;
@@ -327,7 +327,7 @@
     border: 1px solid color-mix(in srgb, var(--oxblood) 30%, transparent);
   }
   .ng-label {
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -442,8 +442,8 @@
     left: 50%;
     transform: translateX(-50%);
     font-family: var(--font-type);
-    font-size: 10.5px;
-    color: var(--ink-faint);
+    font-size: 12px;
+    color: var(--ink-soft);
     white-space: nowrap;
   }
   .flag.hit {

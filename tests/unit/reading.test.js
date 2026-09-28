@@ -59,16 +59,29 @@ describe('ratingSummary', () => {
     { id: 'late', name: 'Late', joinedAt: 5000 },
   ];
 
-  it('keeps the average hidden until everyone expected has rated', () => {
-    const s = ratingSummary(book, members, [{ bookId: 'b1', uid: 'anna', rating: 5 }]);
-    expect(s.complete).toBe(false);
-    expect(s.average).toBeNull();
-    expect(s.ratedCount).toBe(1);
-    expect(s.expectedCount).toBe(2);
-    expect(s.pending.map((m) => m.id)).toEqual(['ben']);
+  it('reveals ratings only to people who have rated themselves', () => {
+    const progress = [{ bookId: 'b1', uid: 'anna', rating: 5 }];
+    const forAnna = ratingSummary(book, members, progress, 'anna');
+    const forBen = ratingSummary(book, members, progress, 'ben');
+    const forNobody = ratingSummary(book, members, progress);
+    expect(forAnna.revealed).toBe(true);
+    expect(forBen.revealed).toBe(false);
+    expect(forNobody.revealed).toBe(false);
+    // not everyone has to rate first
+    expect(forAnna.complete).toBe(false);
+    expect(forAnna.average).toBe(5);
+    expect(forAnna.ratedCount).toBe(1);
+    expect(forAnna.expectedCount).toBe(2);
+    expect(forBen.pending.map((m) => m.id)).toEqual(['ben']);
   });
 
-  it('reveals a one-decimal average when complete', () => {
+  it('reports no average before anyone has rated', () => {
+    const s = ratingSummary(book, members, [{ bookId: 'b1', uid: 'anna', page: 20 }], 'anna');
+    expect(s.average).toBeNull();
+    expect(s.revealed).toBe(false);
+  });
+
+  it('marks the average final once everyone expected has rated', () => {
     const s = ratingSummary(book, members, [
       { bookId: 'b1', uid: 'anna', rating: 5 },
       { bookId: 'b1', uid: 'ben', rating: 4 },

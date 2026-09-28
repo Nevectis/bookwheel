@@ -184,8 +184,8 @@
     gap: 12px;
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 16px;
-    color: var(--ink-faint);
+    font-size: 17px;
+    color: var(--ink-soft);
   }
   .or::before,
   .or::after {

@@ -120,7 +120,7 @@
     font-family: var(--font-type);
     font-size: 13px;
     letter-spacing: 0.1em;
-    color: var(--ink-faint);
+    color: var(--ink-soft);
     margin-top: 4px;
   }
   .m-books {

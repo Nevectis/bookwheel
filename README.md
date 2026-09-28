@@ -24,7 +24,7 @@ stored only in the visitor's browser, so you can try everything straight away.
 | **Reading goals**: "by 10 Oct everyone reaches page 50" (date + page). Everyone updates their current page. | *Aktuell* |
 | Under the wheel, a **strip of little pop-ups** shows each person, the book and how far they are (including whether they're on track). | *Wer liest wie weit?* |
 | **Mark as read**, then give **1–5 stars and a review**, straight away or later. | *Aktuell*, *Chronik* |
-| Once **everyone** has rated, the **average** appears under the book in its month (e.g. 4.3 → four full stars and a partly filled fifth). Ratings stay sealed until then. | *Chronik* |
+| The **average** appears under the book in its month (e.g. 4.3 → four full stars and a partly filled fifth), together with everyone's reviews. To avoid spoilers they stay sealed for you **until you've rated the book yourself**. Nobody has to wait for the whole club. | *Chronik* |
 | Club with **invite code / invite link**. The founder can rename the club, issue a new code and remove members. | Menu → *Club & Einladung* |
 
 ## Setup (about 15 minutes)

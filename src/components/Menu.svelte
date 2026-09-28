@@ -100,6 +100,6 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.18em;
-    color: var(--ink-faint);
+    color: var(--ink-soft);
   }
 </style>

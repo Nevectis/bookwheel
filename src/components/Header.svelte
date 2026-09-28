@@ -116,7 +116,7 @@
     border-bottom: 1px solid transparent;
   }
   .top.scrolled {
-    background: color-mix(in srgb, var(--paper) 84%, transparent);
+    background: color-mix(in srgb, var(--paper) 95%, transparent);
     backdrop-filter: blur(14px) saturate(1.15);
     -webkit-backdrop-filter: blur(14px) saturate(1.15);
     border-bottom-color: var(--line);
@@ -150,7 +150,7 @@
   }
   .club {
     margin-top: 3px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -283,11 +283,11 @@
       gap: 3px;
       padding: 7px 13px 8px;
       border-radius: 10px;
-      font-size: 10.5px;
+      font-size: 11.5px;
       font-weight: 500;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--ink-faint);
+      color: var(--ink-soft);
       text-decoration: none;
       transition: color 0.25s;
     }

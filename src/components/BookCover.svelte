@@ -17,7 +17,7 @@
   const genre = $derived(genreById(book?.genre));
 </script>
 
-<div class="cover {cls}" class:has-img={src && !failed} class:shine style:width style:--g={genre.color} style:--gs={genreSwatch(book?.genre)}>
+<div class="cover {cls}" class:has-img={src && !failed} class:shine style:width style:--g={genre.color} style:--gs={genreSwatch(book?.genre)} style:--deepen={genre.gradient ? 0.45 : null}>
   <div class="fallback" aria-hidden={src && !failed && loaded ? 'true' : undefined}>
     <div class="frame">
       <span class="orn">❦</span>
@@ -69,6 +69,8 @@
       repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
       radial-gradient(130% 90% at 30% 8%, rgba(255, 240, 210, 0.16), transparent 60%),
       radial-gradient(140% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.28)),
+      /* deepens the cloth so the gilt lettering reads on every genre colour */
+      linear-gradient(rgba(20, 12, 6, var(--deepen, 0.28)), rgba(20, 12, 6, var(--deepen, 0.28))),
       var(--gs);
     color: #e6cc92;
     display: grid;
@@ -100,7 +102,7 @@
     font-weight: 600;
     font-size: 12.5cqi;
     line-height: 1.02;
-    color: #edd6a0;
+    color: #f3e2b6;
     text-shadow:
       0 -1px 0 rgba(0, 0, 0, 0.35),
       0 1px 0 rgba(255, 235, 190, 0.12);
@@ -123,7 +125,7 @@
     font-size: 5.6cqi;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #d9bb7e;
+    color: #ead3a0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;

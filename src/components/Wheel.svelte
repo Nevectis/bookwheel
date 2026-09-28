@@ -36,7 +36,7 @@
   const TEXT_OUT = R - 17;
   const TEXT_LEN = TEXT_OUT - HUB - 10;
   // Book-cloth colours: muted, and all dark enough for ivory lettering.
-  const CLOTH = ['#6f2a32', '#2d4a3e', '#2b3a55', '#86673a', '#4a3552', '#3d5a5c', '#77462b', '#4f5638', '#86505a', '#3a332e'];
+  const CLOTH = ['#6f2a32', '#2d4a3e', '#2b3a55', '#74582f', '#4a3552', '#365254', '#77462b', '#4f5638', '#7a4550', '#3a332e'];
   const NUMERALS = ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
 
   let rotation = $state(0);
@@ -464,11 +464,10 @@
     letter-spacing: 0.005em;
   }
   .t-author {
-    fill: #e2cfa4;
+    fill: #eadbb8;
     font-family: var(--font-body);
     font-weight: 500;
     letter-spacing: 0.14em;
-    opacity: 0.92;
   }
   .seam {
     stroke: var(--gilt);

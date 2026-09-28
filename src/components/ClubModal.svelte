@@ -179,7 +179,7 @@
   .hint {
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 16.5px;
+    font-size: 17.5px;
     color: var(--ink-soft);
     margin-bottom: 14px;
   }
@@ -202,7 +202,7 @@
     font-family: var(--font-type);
     font-size: 14px;
     font-weight: 400;
-    color: var(--ink-faint);
+    color: var(--ink-soft);
   }
   .members {
     list-style: none;
@@ -239,7 +239,7 @@
   }
   .you {
     font-family: var(--font-body);
-    font-size: 9.5px !important;
+    font-size: 10.5px !important;
     font-weight: 500 !important;
     letter-spacing: 0.16em;
     text-transform: uppercase;

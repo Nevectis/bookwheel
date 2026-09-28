@@ -180,10 +180,10 @@
     font-weight: 600;
     font-size: 22px;
     line-height: 1;
-    color: var(--gold);
+    color: var(--gold-ink);
   }
   .club {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.24em;
     text-transform: uppercase;

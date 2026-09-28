@@ -15,7 +15,7 @@
   const book = $derived(club.current);
   const rows = $derived.by(() => {
     if (!book) return [];
-    const summaryComplete = club.summary(book).complete;
+    const revealed = club.summary(book).revealed;
     return club.sortedMembers
       .map((m) => {
         const e = club.entry(book.id, m.id);
@@ -28,7 +28,7 @@
           pct: percent(page, book.pageCount, e?.finished),
           goal: readerGoalState(e, book.goals ?? []),
           me: m.id === club.user?.uid,
-          showRating: summaryComplete && e?.rating,
+          showRating: revealed && e?.rating,
         };
       })
       .sort((a, b) => Number(!!b.entry?.finished) - Number(!!a.entry?.finished) || b.pct - a.pct || b.page - a.page);
@@ -161,19 +161,27 @@
   /* a library index card: red header rule, faint blue lines */
   .card-slip {
     --slip: #fbf6e9;
-    --slip-line: rgba(88, 128, 170, 0.18);
-    --slip-red: rgba(170, 60, 60, 0.45);
+    --slip-ink: #2a2420;
+    --slip-soft: #5e5145;
+    --slip-line: rgba(88, 128, 170, 0.13);
+    --slip-red: rgba(170, 60, 60, 0.4);
+    --slip-track: rgba(60, 40, 20, 0.12);
+    --stamp-idle: #6f6357;
+    --stamp-ok: #2f6a45;
+    --stamp-behind: #a23a2c;
+    --stamp-open: #2c4d7a;
+    --stamp-blend: multiply;
     position: relative;
     flex: 0 0 auto;
-    width: 262px;
+    width: 272px;
     scroll-snap-align: start;
     padding: 14px 16px 14px;
     border-radius: 3px;
     background:
-      linear-gradient(var(--slip-red), var(--slip-red)) 0 50px / 100% 1px no-repeat,
-      repeating-linear-gradient(to bottom, transparent 0 23px, var(--slip-line) 23px 24px) 0 50px / 100% calc(100% - 50px) no-repeat,
+      linear-gradient(var(--slip-red), var(--slip-red)) 0 52px / 100% 1px no-repeat,
+      repeating-linear-gradient(to bottom, transparent 0 25px, var(--slip-line) 25px 26px) 0 52px / 100% calc(100% - 52px) no-repeat,
       var(--slip);
-    color: #2a2420;
+    color: var(--slip-ink);
     box-shadow:
       0 1px 1px rgba(60, 40, 20, 0.12),
       0 10px 20px -12px rgba(60, 40, 20, 0.35);
@@ -182,12 +190,33 @@
       transform 0.4s var(--ease-out),
       box-shadow 0.4s var(--ease-out);
   }
+  /* dark mode: dark card stock with light ink, no glare against the page */
   :global(:root[data-theme='dark']) .card-slip {
-    --slip: #e7dcc6;
+    --slip: #2d261f;
+    --slip-ink: #efe6d5;
+    --slip-soft: #c9bba5;
+    --slip-line: rgba(170, 190, 220, 0.08);
+    --slip-red: rgba(225, 120, 120, 0.4);
+    --slip-track: rgba(255, 240, 220, 0.12);
+    --stamp-idle: #b9ab98;
+    --stamp-ok: #93c9a2;
+    --stamp-behind: #f0a293;
+    --stamp-open: #a9c0e6;
+    --stamp-blend: normal;
   }
   @media (prefers-color-scheme: dark) {
     :global(:root:not([data-theme='light'])) .card-slip {
-      --slip: #e7dcc6;
+      --slip: #2d261f;
+      --slip-ink: #efe6d5;
+      --slip-soft: #c9bba5;
+      --slip-line: rgba(170, 190, 220, 0.08);
+      --slip-red: rgba(225, 120, 120, 0.4);
+      --slip-track: rgba(255, 240, 220, 0.12);
+      --stamp-idle: #b9ab98;
+      --stamp-ok: #93c9a2;
+      --stamp-behind: #f0a293;
+      --stamp-open: #a9c0e6;
+      --stamp-blend: normal;
     }
   }
   .card-slip:hover {
@@ -205,7 +234,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 32px;
+    height: 34px;
   }
   .slip-head :global(.avatar) {
     box-shadow: 0 0 0 1.5px var(--slip);
@@ -213,28 +242,29 @@
   .name {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 21px;
+    font-size: 22px;
     line-height: 1;
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
   }
   .you {
     font-family: var(--font-body);
-    font-size: 9.5px;
+    font-size: 11.5px;
     font-weight: 500;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    padding: 2px 5px;
+    padding: 2px 6px;
     border-radius: 3px;
     border: 1px solid currentColor;
-    color: #6b5d50;
+    color: var(--slip-soft);
   }
   .book {
-    margin-top: 12px;
+    margin-top: 14px;
     font-family: var(--font-type);
-    font-size: 13px;
-    line-height: 24px;
+    font-size: 14px;
+    line-height: 26px;
+    color: var(--slip-ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -242,8 +272,8 @@
   .bar {
     height: 3px;
     border-radius: 2px;
-    background: rgba(60, 40, 20, 0.12);
-    margin: 9px 0 8px;
+    background: var(--slip-track);
+    margin: 10px 0 8px;
     overflow: hidden;
   }
   .bar span {
@@ -263,11 +293,13 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    min-height: 34px;
+    min-height: 36px;
   }
   .pages {
     font-family: var(--font-type);
-    font-size: 13px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--slip-ink);
     white-space: nowrap;
   }
   /* rubber stamp */
@@ -275,33 +307,31 @@
     position: absolute;
     right: 12px;
     bottom: 14px;
-    max-width: 52%;
-    padding: 3px 7px 2px;
+    max-width: 54%;
+    padding: 4px 8px 3px;
     border: 1.5px solid currentColor;
     border-radius: 3px;
     font-family: var(--font-body);
-    font-size: 9.5px;
+    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.1em;
     line-height: 1.25;
     text-transform: uppercase;
     text-align: center;
-    transform: rotate(-5deg);
-    opacity: 0.82;
-    mix-blend-mode: multiply;
-    -webkit-mask-image: radial-gradient(circle at 30% 40%, #000 60%, rgba(0, 0, 0, 0.72) 61%, #000 75%);
-    mask-image: radial-gradient(circle at 30% 40%, #000 60%, rgba(0, 0, 0, 0.72) 61%, #000 75%);
-    color: #7a6e62;
+    transform: rotate(-4deg);
+    opacity: 0.92;
+    mix-blend-mode: var(--stamp-blend);
+    color: var(--stamp-idle);
   }
   .stamp.done,
   .stamp.ok {
-    color: #2f6a45;
+    color: var(--stamp-ok);
   }
   .stamp.behind {
-    color: #a23a2c;
+    color: var(--stamp-behind);
   }
   .stamp.open {
-    color: #2c4d7a;
+    color: var(--stamp-open);
   }
   .rated {
     display: inline-flex;

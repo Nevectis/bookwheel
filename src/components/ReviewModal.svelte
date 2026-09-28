@@ -36,6 +36,8 @@
       const s = club.summary(club.book(target.id) ?? target);
       if (s.complete && !wasComplete) {
         toast(`${target.title}: ${t('chron.avg', { value: formatAverage(s.average) })} ★`, { tone: 'success', duration: 6000 });
+      } else if (s.ratedCount > 1 && !mine?.rating) {
+        toast(t('review.revealed'), { tone: 'success', duration: 5500 });
       } else {
         toast(t('review.saved'), { tone: 'success' });
       }
@@ -114,7 +116,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 10.5px;
+    font-size: 11.5px;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -139,7 +141,7 @@
     align-items: center;
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 16px;
+    font-size: 17.5px;
     color: var(--ink-soft);
   }
   .sealed :global(svg) {

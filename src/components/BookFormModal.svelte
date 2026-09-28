@@ -296,7 +296,7 @@
   .hint {
     font-family: var(--font-display);
     font-style: italic;
-    font-size: 16px;
+    font-size: 17.5px;
     color: var(--ink-soft);
     margin-top: 8px;
   }
@@ -409,6 +409,7 @@
     gap: 7px;
   }
   .gopt {
+    position: relative; /* keeps the visually hidden radio inside its label */
     display: inline-flex;
     align-items: center;
     gap: 7px;

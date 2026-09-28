@@ -156,7 +156,7 @@ class ClubStore {
     return this.progress.filter((p) => p.bookId === bookId);
   }
   summary(book) {
-    return ratingSummary(book, this.members, this.progress);
+    return ratingSummary(book, this.members, this.progress, this.user?.uid ?? null);
   }
 
   // ── actions ────────────────────────────────────────────────────────────
