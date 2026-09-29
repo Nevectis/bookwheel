@@ -24,7 +24,7 @@ function isoInDays(n) {
 }
 
 async function enterDemo(page, name = 'Niels') {
-  await page.goto('/');
+  await page.goto('/?demo'); // the real site signs in with Firebase; ?demo opens the sample club
   await page.getByTestId('demo-name').fill(name);
   await page.getByTestId('demo-start').click();
   await expect(page.locator('#wheel')).toBeVisible();

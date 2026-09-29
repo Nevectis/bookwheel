@@ -38,14 +38,14 @@ for (const theme of ['light', 'dark']) {
     });
 
     test('sign-in page text is readable', async ({ page }) => {
-      await page.goto('/');
+      await page.goto('/?demo');
       await expect(page.getByTestId('demo-name')).toBeVisible();
       await page.waitForTimeout(800); // let the page settle in
       expect(await contrastViolations(page)).toEqual([]);
     });
 
     test('main page text is readable', async ({ page }) => {
-      await page.goto('/');
+      await page.goto('/?demo');
       await page.getByTestId('demo-name').fill('Niels');
       await page.getByTestId('demo-start').click();
       await expect(page.locator('#chronicle')).toBeVisible();
@@ -54,7 +54,7 @@ for (const theme of ['light', 'dark']) {
     });
 
     test('dialogs are readable', async ({ page }) => {
-      await page.goto('/');
+      await page.goto('/?demo');
       await page.getByTestId('demo-name').fill('Niels');
       await page.getByTestId('demo-start').click();
 
